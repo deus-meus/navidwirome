@@ -129,5 +129,20 @@ describe('ContextMenus', () => {
       fireEvent.click(screen.getByText('resources.album.actions.refresh'))
       expect(mockRefreshMetadata).toHaveBeenCalledWith('album', 'al1')
     })
+
+    it('shows delete album for admins on album menu', () => {
+      renderMenu(AlbumContextMenu, { id: 'al1', name: 'Album', songCount: 1 })
+      expect(
+        screen.getByText('resources.album.actions.deleteAlbum'),
+      ).toBeInTheDocument()
+    })
+
+    it('hides delete album for regular users on album menu', () => {
+      mockPermissions.value = 'regular'
+      renderMenu(AlbumContextMenu, { id: 'al1', name: 'Album', songCount: 1 })
+      expect(
+        screen.queryByText('resources.album.actions.deleteAlbum'),
+      ).not.toBeInTheDocument()
+    })
   })
 })

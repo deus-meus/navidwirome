@@ -38,16 +38,17 @@ const useStyles = makeStyles({
   },
 })
 
-const MoreButton = ({ record, onClick, info }) => {
-  const handleClick = record.missing
-    ? (e) => {
-        info.action(record)
-        e.stopPropagation()
-      }
-    : onClick
+const MoreButton = ({ record, onClick, info, isAdmin }) => {
+  const handleClick =
+    record?.missing && !isAdmin
+      ? (e) => {
+          info.action(record)
+          e.stopPropagation()
+        }
+      : onClick
   return (
     <IconButton onClick={handleClick} size={'small'}>
-      {record?.missing ? (
+      {record?.missing && !isAdmin ? (
         <MdQuestionMark fontSize={'large'} />
       ) : (
         <MoreVertIcon fontSize={'small'} />
@@ -110,22 +111,22 @@ export const SongContextMenu = ({
 
   const options = {
     playNow: {
-      enabled: true,
+      enabled: present,
       label: translate('resources.song.actions.playNow'),
       action: (record) => dispatch(setTrack(record)),
     },
     playNext: {
-      enabled: true,
+      enabled: present,
       label: translate('resources.song.actions.playNext'),
       action: (record) => dispatch(playNext({ [record.id]: record })),
     },
     addToQueue: {
-      enabled: true,
+      enabled: present,
       label: translate('resources.song.actions.addToQueue'),
       action: (record) => dispatch(addTracks({ [record.id]: record })),
     },
     instantMix: {
-      enabled: config.enableExternalServices,
+      enabled: config.enableExternalServices && present,
       label: translate('resources.song.actions.instantMix'),
       action: async (record) => {
         notify('message.startingInstantMix', { type: 'info' })
@@ -143,7 +144,7 @@ export const SongContextMenu = ({
       },
     },
     addToPlaylist: {
-      enabled: true,
+      enabled: present,
       label: translate('resources.song.actions.addToPlaylist'),
       action: (record) =>
         dispatch(
@@ -154,7 +155,7 @@ export const SongContextMenu = ({
         ),
     },
     showInPlaylist: {
-      enabled: true,
+      enabled: present,
       label:
         translate('resources.song.actions.showInPlaylist') +
         (playlists.length > 0 ? ' ►' : ''),
@@ -163,7 +164,7 @@ export const SongContextMenu = ({
       },
     },
     share: {
-      enabled: config.enableSharing,
+      enabled: config.enableSharing && present,
       label: translate('ra.action.share'),
       action: (record) =>
         dispatch(
@@ -175,7 +176,7 @@ export const SongContextMenu = ({
         ),
     },
     download: {
-      enabled: config.enableDownloads,
+      enabled: config.enableDownloads && present,
       label: `${translate('ra.action.download')} (${formatBytes(record.size)})`,
       action: (record) =>
         dispatch(openDownloadMenu(record, DOWNLOAD_MENU_SONG)),
@@ -290,7 +291,12 @@ export const SongContextMenu = ({
         resource={resource}
         visible={config.enableFavourites && showLove && present}
       />
-      <MoreButton record={record} onClick={handleClick} info={options.info} />
+      <MoreButton
+        record={record}
+        onClick={handleClick}
+        info={options.info}
+        isAdmin={isAdmin}
+      />
       <Menu
         id={'menu' + record.id}
         anchorEl={anchorEl}

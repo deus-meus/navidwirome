@@ -26,6 +26,7 @@ vi.mock('react-admin', async (importOriginal) => {
   return {
     ...actual,
     useNotify: () => vi.fn(),
+    useRedirect: () => vi.fn(),
     useDataProvider: () => ({ refreshMetadata: mockRefreshMetadata }),
     usePermissions: () => ({ permissions: mockPermissions.value }),
     useTranslate: () => (x) => x,
@@ -63,6 +64,21 @@ describe('AlbumActions', () => {
     renderAlbumActions()
     expect(
       screen.queryByRole('button', { name: refreshLabel }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('shows delete album button for admins', () => {
+    renderAlbumActions()
+    expect(
+      screen.getByRole('button', { name: 'resources.album.actions.deleteAlbum' }),
+    ).toBeInTheDocument()
+  })
+
+  it('hides delete album button for non-admin users', () => {
+    mockPermissions.value = 'regular'
+    renderAlbumActions()
+    expect(
+      screen.queryByRole('button', { name: 'resources.album.actions.deleteAlbum' }),
     ).not.toBeInTheDocument()
   })
 })

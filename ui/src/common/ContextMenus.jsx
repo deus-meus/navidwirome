@@ -12,6 +12,8 @@ import {
   useNotify,
   usePermissions,
   useTranslate,
+  useRefresh,
+  Confirm,
 } from 'react-admin'
 import clsx from 'clsx'
 import {
@@ -31,6 +33,7 @@ import config from '../config'
 import { formatBytes } from '../utils'
 import { artistDownloadSize } from './artist'
 import { useRefreshMetadata } from './useRefreshMetadata'
+import { useUserPermissions } from './useUserPermissions'
 
 const useStyles = makeStyles({
   noWrap: {
@@ -41,17 +44,18 @@ const useStyles = makeStyles({
   },
 })
 
-const MoreButton = ({ record, onClick, info, ...rest }) => {
-  const handleClick = record.missing
-    ? (e) => {
-        e.preventDefault()
-        info.action(record)
-        e.stopPropagation()
-      }
-    : onClick
+const MoreButton = ({ record, onClick, info, isAdmin, ...rest }) => {
+  const handleClick =
+    record?.missing && !isAdmin
+      ? (e) => {
+          e.preventDefault()
+          info.action(record)
+          e.stopPropagation()
+        }
+      : onClick
   return (
     <IconButton onClick={handleClick} size={'small'} {...rest}>
-      {record?.missing ? (
+      {record?.missing && !isAdmin ? (
         <MdQuestionMark fontSize={'large'} />
       ) : (
         <MoreVertIcon fontSize={'small'} />
@@ -76,8 +80,36 @@ const ContextMenu = ({
   const translate = useTranslate()
   const notify = useNotify()
   const { permissions } = usePermissions()
+  const { isAdmin } = useUserPermissions()
+  const refresh = useRefresh()
   const refreshMetadata = useRefreshMetadata()
   const [anchorEl, setAnchorEl] = useState(null)
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+
+  const handleDeleteAlbum = async () => {
+    setDeleting(true)
+    const token = localStorage.getItem('token') || ''
+    try {
+      const response = await fetch(`/api/music/album/${record.id}`, {
+        method: 'DELETE',
+        headers: {
+          'x-nd-authorization': `Bearer ${token}`,
+        },
+      })
+      if (response.ok) {
+        notify('resources.album.notifications.albumDeleted', { type: 'info' })
+        setDeleteConfirmOpen(false)
+        refresh()
+      } else {
+        notify('resources.album.notifications.deleteError', { type: 'warning' })
+      }
+    } catch (err) {
+      notify('resources.album.notifications.deleteError', { type: 'warning' })
+    } finally {
+      setDeleting(false)
+    }
+  }
 
   const isArtist = resource === 'artist'
   const downloadSize = isArtist ? artistDownloadSize(record) : record?.size
@@ -151,6 +183,12 @@ const ContextMenu = ({
         action: () => dispatch(openExtendedInfoDialog(record)),
       },
     }),
+    deleteAlbum: {
+      enabled: isAdmin && resource === 'album',
+      needData: false,
+      label: translate('resources.album.actions.deleteAlbum'),
+      action: () => setDeleteConfirmOpen(true),
+    },
   }
 
   const handleClick = (e) => {
@@ -214,6 +252,7 @@ const ContextMenu = ({
         record={record}
         onClick={handleClick}
         info={options.info}
+        isAdmin={isAdmin}
         aria-label="more"
         aria-controls="context-menu"
         aria-haspopup="true"
@@ -229,12 +268,27 @@ const ContextMenu = ({
         {Object.keys(options).map(
           (key) =>
             options[key].enabled && (
-              <MenuItem value={key} key={key} onClick={handleItemClick}>
+              <MenuItem
+                value={key}
+                key={key}
+                onClick={handleItemClick}
+                style={key === 'deleteAlbum' ? { color: '#e53935' } : undefined}
+              >
                 {options[key].label}
               </MenuItem>
             ),
         )}
       </Menu>
+      {deleteConfirmOpen && (
+        <Confirm
+          isOpen={deleteConfirmOpen}
+          loading={deleting}
+          title={'resources.album.dialog.deleteAlbumTitle'}
+          content={'resources.album.dialog.deleteAlbumConfirm'}
+          onConfirm={handleDeleteAlbum}
+          onClose={() => setDeleteConfirmOpen(false)}
+        />
+      )}
     </span>
   )
 }

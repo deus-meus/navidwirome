@@ -268,6 +268,19 @@ describe('SongContextMenu', () => {
       )
     })
 
+    it('shows Delete Track action for missing track when user is admin', async () => {
+      localStorage.setItem('role', 'admin')
+      render(
+        <TestContext>
+          <SongContextMenu record={{ id: 'song1', size: 1, missing: true }} resource="song" />
+        </TestContext>,
+      )
+      fireEvent.click(screen.getByRole('button'))
+      await waitFor(() =>
+        expect(screen.getByText(/resources\.song\.actions\.deleteTrack/)).toBeInTheDocument(),
+      )
+    })
+
     it('hides Delete Track action when user is not admin', async () => {
       localStorage.removeItem('role')
       localStorage.setItem('canEditTags', 'true')

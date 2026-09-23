@@ -8,12 +8,14 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/Masterminds/squirrel"
 	"github.com/go-chi/chi/v5"
 	"github.com/navidrome/navidrome/conf"
 	"github.com/navidrome/navidrome/core/fingerprint"
 	"github.com/navidrome/navidrome/core/organizer"
 	"github.com/navidrome/navidrome/core/tagger"
 	"github.com/navidrome/navidrome/log"
+	"github.com/navidrome/navidrome/model"
 	"github.com/navidrome/navidrome/model/request"
 	"go.senan.xyz/taglib"
 )
@@ -27,6 +29,10 @@ func (api *Router) addMusicMutationRoute(r chi.Router) {
 			r.Delete("/", api.handleDeleteTrack)
 		})
 		r.Delete("/track/{id}", api.handleDeleteTrack)
+		r.Route("/album/{id}", func(r chi.Router) {
+			r.Delete("/", api.handleDeleteAlbum)
+		})
+		r.Delete("/album/{id}", api.handleDeleteAlbum)
 	})
 }
 
@@ -389,7 +395,14 @@ func (api *Router) handleDeleteTrack(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Remove physical file from disk
+	musicFolder := conf.Server.MusicFolder
+	if musicFolder == "" {
+		musicFolder = os.TempDir()
+	}
 	filePath := mediaFile.Path
+	if !filepath.IsAbs(filePath) {
+		filePath = filepath.Join(musicFolder, filePath)
+	}
 	if _, err := os.Stat(filePath); err == nil {
 		if err := os.Remove(filePath); err != nil {
 			log.Error(ctx, "Failed to delete track file from disk", "err", err, "path", filePath)
@@ -405,9 +418,11 @@ func (api *Router) handleDeleteTrack(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Run GC to automatically purge empty album/artist/folder records from SQLite
+	_ = api.ds.GC(ctx)
+
 	// Clean up parent directory if empty
 	parentDir := filepath.Dir(filePath)
-	musicFolder := conf.Server.MusicFolder
 	if parentDir != musicFolder && filepath.Base(parentDir) != "_Inbox" {
 		entries, _ := os.ReadDir(parentDir)
 		if len(entries) == 0 {
@@ -423,5 +438,71 @@ func (api *Router) handleDeleteTrack(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(map[string]any{
 		"success": true,
 		"deleted": trackID,
+	})
+}
+
+func (api *Router) handleDeleteAlbum(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	user, ok := request.UserFrom(ctx)
+	if !ok || !user.IsAdmin {
+		http.Error(w, "Forbidden: only admins can delete albums", http.StatusForbidden)
+		return
+	}
+
+	albumID := chi.URLParam(r, "id")
+	if albumID == "" {
+		http.Error(w, "missing album id", http.StatusBadRequest)
+		return
+	}
+
+	mfs, err := api.ds.MediaFile(ctx).GetAll(model.QueryOptions{
+		Filters: squirrel.Eq{"album_id": albumID},
+	})
+	if err != nil {
+		log.Error(ctx, "Failed to query tracks for album deletion", "err", err, "albumID", albumID)
+		http.Error(w, "failed to query album tracks", http.StatusInternalServerError)
+		return
+	}
+
+	musicFolder := conf.Server.MusicFolder
+	if musicFolder == "" {
+		musicFolder = os.TempDir()
+	}
+
+	parentDirs := make(map[string]bool)
+	for _, mf := range mfs {
+		filePath := mf.Path
+		if !filepath.IsAbs(filePath) {
+			filePath = filepath.Join(musicFolder, filePath)
+		}
+		if _, err := os.Stat(filePath); err == nil {
+			_ = os.Remove(filePath)
+		}
+		_ = api.ds.MediaFile(ctx).Delete(mf.ID)
+		parentDir := filepath.Dir(filePath)
+		if parentDir != musicFolder && filepath.Base(parentDir) != "_Inbox" {
+			parentDirs[parentDir] = true
+		}
+	}
+
+	// Run GC to purge the empty album, empty artists, and annotations from database
+	_ = api.ds.GC(ctx)
+
+	// Clean up empty directories
+	for dir := range parentDirs {
+		entries, _ := os.ReadDir(dir)
+		if len(entries) == 0 {
+			_ = os.Remove(dir)
+		} else if len(entries) == 1 && strings.HasPrefix(strings.ToLower(entries[0].Name()), "cover.") {
+			_ = os.Remove(filepath.Join(dir, entries[0].Name()))
+			_ = os.Remove(dir)
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]any{
+		"success": true,
+		"deleted": albumID,
 	})
 }

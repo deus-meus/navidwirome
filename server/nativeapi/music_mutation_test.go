@@ -182,4 +182,34 @@ var _ = Describe("Music Mutation Endpoints", func() {
 			Expect(dbErr).To(HaveOccurred())
 		})
 	})
+
+	Describe("DELETE /music/album/:id", func() {
+		It("rejects delete from non-admin users with 403 Forbidden", func() {
+			req := httptest.NewRequest("DELETE", "/music/album/alb-1", nil)
+			req.Header.Set("x-nd-authorization", "Bearer "+regularToken)
+			router.ServeHTTP(w, req)
+			Expect(w.Code).To(Equal(http.StatusForbidden))
+		})
+
+		It("accepts delete from admin and removes album tracks and files", func() {
+			tmpFile, err := os.CreateTemp("", "test_alb_*.mp3")
+			Expect(err).NotTo(HaveOccurred())
+			tmpPath := tmpFile.Name()
+			tmpFile.Close()
+
+			Expect(mfRepo.Put(&model.MediaFile{ID: "song-alb-1", AlbumID: "alb-del-1", Title: "Album Song", Path: tmpPath})).To(Succeed())
+
+			req := httptest.NewRequest("DELETE", "/music/album/alb-del-1", nil)
+			req.Header.Set("x-nd-authorization", "Bearer "+adminToken)
+
+			router.ServeHTTP(w, req)
+			Expect(w.Code).To(Equal(http.StatusOK))
+
+			_, statErr := os.Stat(tmpPath)
+			Expect(os.IsNotExist(statErr)).To(BeTrue())
+
+			_, dbErr := mfRepo.Get("song-alb-1")
+			Expect(dbErr).To(HaveOccurred())
+		})
+	})
 })

@@ -113,7 +113,16 @@
         "addToPlaylist": "Add to Playlist",
         "download": "Download",
         "info": "Get Info",
-        "refresh": "Refresh Metadata"
+        "refresh": "Refresh Metadata",
+        "deleteAlbum": "Delete Album"
+      },
+      "dialog": {
+        "deleteAlbumTitle": "Delete Album",
+        "deleteAlbumConfirm": "Are you sure you want to permanently delete this album and all its tracks from disk and library?"
+      },
+      "notifications": {
+        "albumDeleted": "Album deleted successfully",
+        "deleteError": "Failed to delete album"
       },
       "lists": {
         "all": "All",
