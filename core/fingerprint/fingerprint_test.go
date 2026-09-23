@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -96,4 +98,54 @@ func TestIdentifyTimeout(t *testing.T) {
 	meta, err := client.LookupFingerprint(ctx, 100, "data")
 	assert.Error(t, err)
 	assert.Nil(t, meta)
+}
+
+func TestSearchArtworkURL(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{
+			"resultCount": 1,
+			"results": [
+				{
+					"trackName": "Cobra",
+					"artistName": "Geese",
+					"collectionName": "Getting Killed",
+					"artworkUrl100": "https://example.com/image/100x100bb.jpg"
+				}
+			]
+		}`))
+	}))
+	defer ts.Close()
+
+	client := fingerprint.NewClient()
+	client.SetSearchURL(ts.URL)
+
+	url, err := client.SearchArtworkURL(context.Background(), "Geese", "Cobra")
+	require.NoError(t, err)
+	assert.Equal(t, "https://example.com/image/1000x1000bb.jpg", url)
+}
+
+func TestDownloadCoverArt(t *testing.T) {
+	expectedData := []byte("fake-jpeg-image-bytes")
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "image/jpeg")
+		w.Write(expectedData)
+	}))
+	defer ts.Close()
+
+	tmpDir := t.TempDir()
+	client := fingerprint.NewClient()
+
+	err := client.DownloadCoverArt(context.Background(), ts.URL, tmpDir)
+	require.NoError(t, err)
+
+	destFile := filepath.Join(tmpDir, "cover.jpg")
+	assert.FileExists(t, destFile)
+	data, err := os.ReadFile(destFile)
+	require.NoError(t, err)
+	assert.Equal(t, expectedData, data)
+
+	// Idempotent test: if cover.jpg already exists, it shouldn't overwrite or error
+	err = client.DownloadCoverArt(context.Background(), ts.URL, tmpDir)
+	require.NoError(t, err)
 }

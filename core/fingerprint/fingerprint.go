@@ -5,9 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -20,6 +23,7 @@ var (
 
 const DefaultAcoustIDClientKey = "8XaBELgH"
 const DefaultAcoustIDURL = "https://api.acoustid.org/v2/lookup"
+const DefaultSearchURL = "https://itunes.apple.com/search"
 
 type TrackMetadata struct {
 	Title       string `json:"title"`
@@ -32,9 +36,10 @@ type TrackMetadata struct {
 }
 
 type Client struct {
-	endpoint string
-	apiKey   string
-	client   *http.Client
+	endpoint  string
+	apiKey    string
+	searchURL string
+	client    *http.Client
 }
 
 func NewClient() *Client {
@@ -43,10 +48,15 @@ func NewClient() *Client {
 
 func NewClientWithURL(endpoint string, timeout time.Duration) *Client {
 	return &Client{
-		endpoint: endpoint,
-		apiKey:   DefaultAcoustIDClientKey,
-		client:   &http.Client{Timeout: timeout},
+		endpoint:  endpoint,
+		apiKey:    DefaultAcoustIDClientKey,
+		searchURL: DefaultSearchURL,
+		client:    &http.Client{Timeout: timeout},
 	}
+}
+
+func (c *Client) SetSearchURL(url string) {
+	c.searchURL = url
 }
 
 type acoustIDResponse struct {
@@ -161,4 +171,122 @@ func (c *Client) IdentifyFile(ctx context.Context, filePath string) (*TrackMetad
 		return nil, err
 	}
 	return c.LookupFingerprint(ctx, duration, fp)
+}
+
+type itunesSearchResult struct {
+	ResultCount int `json:"resultCount"`
+	Results     []struct {
+		TrackName      string `json:"trackName"`
+		ArtistName     string `json:"artistName"`
+		CollectionName string `json:"collectionName"`
+		ArtworkURL100  string `json:"artworkUrl100"`
+	} `json:"results"`
+}
+
+// SearchTrack queries iTunes/Apple Music search API to find album name and high-resolution artwork.
+func (c *Client) SearchTrack(ctx context.Context, artist, title string) (string, string, error) {
+	cleanArtist := strings.TrimSpace(artist)
+	cleanTitle := strings.TrimSpace(title)
+	if cleanArtist == "" && cleanTitle == "" {
+		return "", "", errors.New("empty artist and title for track search")
+	}
+
+	searchEndpoint := c.searchURL
+	if searchEndpoint == "" {
+		searchEndpoint = DefaultSearchURL
+	}
+
+	query := strings.TrimSpace(cleanArtist + " " + cleanTitle)
+	reqURL := fmt.Sprintf("%s?term=%s&entity=song&limit=1", searchEndpoint, url.QueryEscape(query))
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)
+	if err != nil {
+		return "", "", err
+	}
+
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return "", "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", "", fmt.Errorf("search API returned status %d", resp.StatusCode)
+	}
+
+	var searchResp itunesSearchResult
+	if err := json.NewDecoder(resp.Body).Decode(&searchResp); err != nil {
+		return "", "", err
+	}
+
+	if len(searchResp.Results) == 0 {
+		return "", "", errors.New("no track found")
+	}
+
+	res := searchResp.Results[0]
+	album := res.CollectionName
+	artURL := res.ArtworkURL100
+	if artURL != "" {
+		artURL = strings.Replace(artURL, "100x100bb", "1000x1000bb", 1)
+	}
+	return album, artURL, nil
+}
+
+// SearchArtworkURL queries iTunes/Apple Music search API to find high-resolution album artwork.
+func (c *Client) SearchArtworkURL(ctx context.Context, artist, title string) (string, error) {
+	_, artURL, err := c.SearchTrack(ctx, artist, title)
+	if err != nil {
+		return "", err
+	}
+	if artURL == "" {
+		return "", errors.New("no artwork found")
+	}
+	return artURL, nil
+}
+
+// DownloadCoverArt downloads the cover image from coverURL and writes it as cover.jpg inside targetDir.
+func (c *Client) DownloadCoverArt(ctx context.Context, coverURL, targetDir string) error {
+	if strings.TrimSpace(coverURL) == "" || strings.TrimSpace(targetDir) == "" {
+		return errors.New("coverURL and targetDir must not be empty")
+	}
+
+	targetFile := filepath.Join(targetDir, "cover.jpg")
+	if _, err := os.Stat(targetFile); err == nil {
+		return nil
+	}
+
+	if err := os.MkdirAll(targetDir, 0755); err != nil {
+		return fmt.Errorf("failed to create directory %s: %w", targetDir, err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, coverURL, nil)
+	if err != nil {
+		return err
+	}
+
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed to download cover art, status: %d", resp.StatusCode)
+	}
+
+	tmpFile := filepath.Join(targetDir, "cover.jpg.tmp")
+	out, err := os.Create(tmpFile)
+	if err != nil {
+		return err
+	}
+
+	limitReader := io.LimitReader(resp.Body, 10*1024*1024)
+	if _, err := io.Copy(out, limitReader); err != nil {
+		out.Close()
+		_ = os.Remove(tmpFile)
+		return err
+	}
+	out.Close()
+
+	return os.Rename(tmpFile, targetFile)
 }

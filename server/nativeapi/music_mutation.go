@@ -103,12 +103,13 @@ func (api *Router) handleMusicUpload(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// If auto-identify requested or missing metadata, try AcoustID
+	var coverURL string
+	client := fingerprint.NewClient()
 	autoTag := r.URL.Query().Get("autoTag") == "true" ||
 		r.URL.Query().Get("auto_identify") == "true" ||
 		r.FormValue("autoTag") == "true" ||
 		r.FormValue("auto_identify") == "true"
 	if autoTag || (artist == "" && album == "") {
-		client := fingerprint.NewClient()
 		if meta, err := client.IdentifyFile(ctx, tempPath); err == nil && meta != nil {
 			if meta.Title != "" {
 				title = meta.Title
@@ -118,6 +119,9 @@ func (api *Router) handleMusicUpload(w http.ResponseWriter, r *http.Request) {
 			}
 			if meta.Album != "" {
 				album = meta.Album
+			}
+			if meta.CoverArtURL != "" {
+				coverURL = meta.CoverArtURL
 			}
 			// Write identified tags into staged file
 			_ = tagger.WriteTags(tempPath, tagger.TagUpdates{
@@ -142,6 +146,21 @@ func (api *Router) handleMusicUpload(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Fallback: If album is empty or coverURL is empty, search online via iTunes
+	if (album == "" || coverURL == "") && artist != "" && title != "" {
+		if itunesAlbum, itunesCover, err := client.SearchTrack(ctx, artist, title); err == nil {
+			if album == "" && itunesAlbum != "" {
+				album = itunesAlbum
+				_ = tagger.WriteTags(tempPath, tagger.TagUpdates{
+					Album: album,
+				})
+			}
+			if coverURL == "" && itunesCover != "" {
+				coverURL = itunesCover
+			}
+		}
+	}
+
 	musicFolder := conf.Server.MusicFolder
 	if musicFolder == "" {
 		musicFolder = os.TempDir()
@@ -153,6 +172,14 @@ func (api *Router) handleMusicUpload(w http.ResponseWriter, r *http.Request) {
 		log.Error(ctx, "Failed to move uploaded file to target", "err", err, "target", targetPath)
 		http.Error(w, "failed to organize file into library", http.StatusInternalServerError)
 		return
+	}
+
+	// Download album cover if target is an organized album folder
+	albumDir := filepath.Dir(finalPath)
+	if albumDir != musicFolder && filepath.Base(albumDir) != "_Inbox" {
+		if coverURL != "" {
+			_ = client.DownloadCoverArt(ctx, coverURL, albumDir)
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -173,43 +200,80 @@ func (api *Router) handleMusicIdentify(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	r.Body = http.MaxBytesReader(w, r.Body, 50<<20)
-	if err := r.ParseMultipartForm(10 << 20); err != nil {
-		http.Error(w, "invalid form", http.StatusBadRequest)
-		return
-	}
-	defer func() {
-		if r.MultipartForm != nil {
-			_ = r.MultipartForm.RemoveAll()
+	var filePath string
+	var filename string
+	trackID := r.URL.Query().Get("id")
+	if trackID != "" {
+		if mf, err := api.ds.MediaFile(r.Context()).Get(trackID); err == nil && mf != nil {
+			filePath = mf.Path
+			filename = filepath.Base(mf.Path)
 		}
-	}()
-
-	file, _, err := r.FormFile("file")
-	if err != nil {
-		http.Error(w, "missing file", http.StatusBadRequest)
-		return
 	}
-	defer file.Close()
 
-	tempFile, err := os.CreateTemp("", "identify_*.tmp")
-	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
-		return
-	}
-	defer func() {
+	if filePath == "" {
+		r.Body = http.MaxBytesReader(w, r.Body, 50<<20)
+		if err := r.ParseMultipartForm(10 << 20); err != nil {
+			http.Error(w, "invalid form", http.StatusBadRequest)
+			return
+		}
+		defer func() {
+			if r.MultipartForm != nil {
+				_ = r.MultipartForm.RemoveAll()
+			}
+		}()
+
+		file, header, err := r.FormFile("file")
+		if err != nil {
+			http.Error(w, "missing track id or file", http.StatusBadRequest)
+			return
+		}
+		defer file.Close()
+		filename = header.Filename
+
+		tempFile, err := os.CreateTemp("", "identify_*.tmp")
+		if err != nil {
+			http.Error(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		defer func() {
+			tempFile.Close()
+			_ = os.Remove(tempFile.Name())
+		}()
+
+		_, _ = io.Copy(tempFile, file)
+		filePath = tempFile.Name()
 		tempFile.Close()
-		_ = os.Remove(tempFile.Name())
-	}()
-
-	_, _ = io.Copy(tempFile, file)
-	tempPath := tempFile.Name()
-	tempFile.Close()
+	}
 
 	client := fingerprint.NewClient()
-	meta, err := client.IdentifyFile(r.Context(), tempPath)
+	meta, err := client.IdentifyFile(r.Context(), filePath)
 	if err != nil {
-		http.Error(w, "identification failed: "+err.Error(), http.StatusNotFound)
-		return
+		// AcoustID fallback: try filename metadata parser
+		parsedArtist, parsedTitle := organizer.ParseFilenameMetadata(filename)
+		if parsedArtist != "" {
+			itunesAlbum, itunesCover, searchErr := client.SearchTrack(r.Context(), parsedArtist, parsedTitle)
+			if searchErr == nil {
+				meta = &fingerprint.TrackMetadata{
+					Artist:      parsedArtist,
+					Title:       parsedTitle,
+					Album:       itunesAlbum,
+					CoverArtURL: itunesCover,
+				}
+			}
+		}
+		if meta == nil {
+			http.Error(w, "identification failed: "+err.Error(), http.StatusNotFound)
+			return
+		}
+	} else if meta != nil && (meta.CoverArtURL == "" || meta.Album == "") {
+		if itunesAlbum, itunesCover, err := client.SearchTrack(r.Context(), meta.Artist, meta.Title); err == nil {
+			if meta.Album == "" {
+				meta.Album = itunesAlbum
+			}
+			if meta.CoverArtURL == "" {
+				meta.CoverArtURL = itunesCover
+			}
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -261,6 +325,37 @@ func (api *Router) handleUpdateTrackTags(w http.ResponseWriter, r *http.Request)
 	if updates.Album != "" {
 		mediaFile.Album = updates.Album
 	}
+
+	// Reorganize physical file if artist and album are known
+	musicFolder := conf.Server.MusicFolder
+	if musicFolder == "" {
+		musicFolder = os.TempDir()
+	}
+	if mediaFile.Artist != "" && mediaFile.Album != "" {
+		targetPath := organizer.ResolveTargetPath(musicFolder, mediaFile.Artist, mediaFile.Album, updates.TrackNumber, mediaFile.Title, filepath.Ext(mediaFile.Path))
+		if targetPath != mediaFile.Path {
+			if newPath, err := organizer.MoveFileSafely(mediaFile.Path, targetPath); err == nil {
+				mediaFile.Path = newPath
+			}
+		}
+	}
+
+	// Download album cover if not present
+	albumDir := filepath.Dir(mediaFile.Path)
+	if albumDir != musicFolder && filepath.Base(albumDir) != "_Inbox" {
+		coverPath := filepath.Join(albumDir, "cover.jpg")
+		if _, err := os.Stat(coverPath); os.IsNotExist(err) {
+			client := fingerprint.NewClient()
+			coverURL := updates.CoverArtURL
+			if coverURL == "" && mediaFile.Artist != "" && mediaFile.Title != "" {
+				_, coverURL, _ = client.SearchTrack(ctx, mediaFile.Artist, mediaFile.Title)
+			}
+			if coverURL != "" {
+				_ = client.DownloadCoverArt(ctx, coverURL, albumDir)
+			}
+		}
+	}
+
 	_ = api.ds.MediaFile(ctx).Put(mediaFile)
 
 	w.Header().Set("Content-Type", "application/json")

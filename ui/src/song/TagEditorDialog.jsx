@@ -10,6 +10,7 @@ import {
   DialogTitle,
   Grid,
   TextField,
+  Typography,
   makeStyles,
 } from '@material-ui/core'
 import SearchIcon from '@material-ui/icons/Search'
@@ -40,6 +41,7 @@ export const TagEditorDialog = ({ open, record, onClose }) => {
     year: '',
     genre: '',
   })
+  const [coverArtURL, setCoverArtURL] = useState('')
   const [detecting, setDetecting] = useState(false)
   const [saving, setSaving] = useState(false)
 
@@ -78,6 +80,9 @@ export const TagEditorDialog = ({ open, record, onClose }) => {
 
       if (response.ok) {
         const metadata = await response.json()
+        if (metadata.coverArtURL) {
+          setCoverArtURL(metadata.coverArtURL)
+        }
         setFormData((prev) => ({
           ...prev,
           title: metadata.title || prev.title,
@@ -115,6 +120,7 @@ export const TagEditorDialog = ({ open, record, onClose }) => {
       trackNumber: formData.trackNumber ? parseInt(formData.trackNumber, 10) : 0,
       year: formData.year ? parseInt(formData.year, 10) : 0,
       genre: formData.genre,
+      coverArtURL: coverArtURL,
     }
 
     try {
@@ -162,6 +168,37 @@ export const TagEditorDialog = ({ open, record, onClose }) => {
         >
           {translate('resources.song.tagEditor.autoDetect')}
         </Button>
+
+        {coverArtURL && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              marginBottom: 16,
+              padding: 8,
+              backgroundColor: 'rgba(0,0,0,0.04)',
+              borderRadius: 4,
+            }}
+          >
+            <img
+              src={coverArtURL}
+              alt="Cover Art"
+              style={{
+                width: 64,
+                height: 64,
+                borderRadius: 4,
+                objectFit: 'cover',
+                marginRight: 16,
+              }}
+            />
+            <div>
+              <Typography variant="subtitle2">Album Cover Detected</Typography>
+              <Typography variant="caption" color="textSecondary">
+                Will be downloaded and saved as album cover
+              </Typography>
+            </div>
+          </div>
+        )}
 
         <Grid container spacing={2}>
           <Grid item xs={12}>

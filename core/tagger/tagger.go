@@ -19,6 +19,7 @@ type TagUpdates struct {
 	TrackNumber string `json:"trackNumber"`
 	DiscNumber  string `json:"discNumber"`
 	Comment     string `json:"comment"`
+	CoverArtURL string `json:"coverArtURL,omitempty"`
 }
 
 // WriteTags updates audio metadata safely and atomically.
