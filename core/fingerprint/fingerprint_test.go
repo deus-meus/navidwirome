@@ -149,3 +149,20 @@ func TestDownloadCoverArt(t *testing.T) {
 	err = client.DownloadCoverArt(context.Background(), ts.URL, tmpDir)
 	require.NoError(t, err)
 }
+
+func TestIdentifyRealFile(t *testing.T) {
+	testFile := "/home/dwidora/Music/_Inbox/Conundrum.mp3"
+	if _, err := os.Stat(testFile); os.IsNotExist(err) {
+		t.Skip("sample file not found, skipping live identification test")
+	}
+
+	client := fingerprint.NewClient()
+	meta, err := client.IdentifyFile(context.Background(), testFile)
+	require.NoError(t, err)
+	require.NotNil(t, meta)
+
+	assert.Equal(t, "Conundrum", meta.Title)
+	assert.Equal(t, "The SIGIT", meta.Artist)
+	assert.Equal(t, "Detourn", meta.Album)
+	assert.NotEmpty(t, meta.CoverArtURL)
+}

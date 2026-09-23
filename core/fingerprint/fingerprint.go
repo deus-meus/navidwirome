@@ -21,7 +21,7 @@ var (
 	ErrFpcalcError = errors.New("failed to generate audio fingerprint")
 )
 
-const DefaultAcoustIDClientKey = "8XaBELgH"
+const DefaultAcoustIDClientKey = "p23b3SPjlAc"
 const DefaultAcoustIDURL = "https://api.acoustid.org/v2/lookup"
 const DefaultSearchURL = "https://itunes.apple.com/search"
 
@@ -115,7 +115,7 @@ func ParseAcoustIDResponse(data []byte) (*TrackMetadata, error) {
 func (c *Client) LookupFingerprint(ctx context.Context, duration int, fingerprint string) (*TrackMetadata, error) {
 	params := url.Values{}
 	params.Set("client", c.apiKey)
-	params.Set("meta", "recordings+releasegroups+compress")
+	params.Set("meta", "recordings releasegroups")
 	params.Set("duration", strconv.Itoa(duration))
 	params.Set("fingerprint", fingerprint)
 
