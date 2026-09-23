@@ -118,6 +118,13 @@ describe('<UserEdit />', () => {
     expect(screen.getByTestId('boolean-input-isAdmin')).toBeInTheDocument()
   })
 
+  it('should render canUpload and canEditTags checkboxes for admin users', () => {
+    render(<UserEdit id="user1" permissions="admin" />)
+
+    expect(screen.getByTestId('boolean-input-canUpload')).toBeInTheDocument()
+    expect(screen.getByTestId('boolean-input-canEditTags')).toBeInTheDocument()
+  })
+
   it('should render date fields', () => {
     render(<UserEdit id="user1" permissions="admin" />)
 

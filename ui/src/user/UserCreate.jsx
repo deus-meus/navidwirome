@@ -75,6 +75,8 @@ const UserCreate = (props) => {
           validate={[required()]}
         />
         <BooleanInput source="isAdmin" defaultValue={false} />
+        <BooleanInput source="canUpload" defaultValue={false} />
+        <BooleanInput source="canEditTags" defaultValue={false} />
 
         {/* Conditional Library Selection */}
         <FormDataConsumer>

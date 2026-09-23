@@ -146,6 +146,8 @@
       "fields": {
         "userName": "Username",
         "isAdmin": "Is Admin",
+        "canUpload": "Can Upload",
+        "canEditTags": "Can Edit Tags",
         "lastLoginAt": "Last Login",
         "lastAccessAt": "Last Access",
         "updatedAt": "Updated at",
