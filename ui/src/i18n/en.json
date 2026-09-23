@@ -52,7 +52,12 @@
         "playNext": "Play Next",
         "info": "Get Info",
         "instantMix": "Instant Mix",
-        "editTags": "Edit Tags"
+        "editTags": "Edit Tags",
+        "deleteTrack": "Delete Track"
+      },
+      "dialog": {
+        "deleteTrackTitle": "Delete Track",
+        "deleteTrackConfirm": "Are you sure you want to permanently delete this track from your library and disk?"
       },
       "tagEditor": {
         "title": "Edit Metadata",
@@ -63,7 +68,9 @@
       },
       "notifications": {
         "tagsUpdated": "Track metadata updated successfully",
-        "tagsUpdateError": "Failed to update track metadata"
+        "tagsUpdateError": "Failed to update track metadata",
+        "trackDeleted": "Track deleted successfully",
+        "deleteError": "Failed to delete track"
       }
     },
     "album": {

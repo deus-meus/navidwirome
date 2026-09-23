@@ -24,7 +24,9 @@ func (api *Router) addMusicMutationRoute(r chi.Router) {
 		r.Post("/identify", api.handleMusicIdentify)
 		r.Route("/track/{id}", func(r chi.Router) {
 			r.Put("/tags", api.handleUpdateTrackTags)
+			r.Delete("/", api.handleDeleteTrack)
 		})
+		r.Delete("/track/{id}", api.handleDeleteTrack)
 	})
 }
 
@@ -363,5 +365,63 @@ func (api *Router) handleUpdateTrackTags(w http.ResponseWriter, r *http.Request)
 	_ = json.NewEncoder(w).Encode(map[string]any{
 		"success": true,
 		"track":   mediaFile,
+	})
+}
+
+func (api *Router) handleDeleteTrack(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	user, ok := request.UserFrom(ctx)
+	if !ok || !user.IsAdmin {
+		http.Error(w, "Forbidden: only admins can delete tracks", http.StatusForbidden)
+		return
+	}
+
+	trackID := chi.URLParam(r, "id")
+	if trackID == "" {
+		http.Error(w, "missing track id", http.StatusBadRequest)
+		return
+	}
+
+	mediaFile, err := api.ds.MediaFile(ctx).Get(trackID)
+	if err != nil {
+		http.Error(w, "track not found", http.StatusNotFound)
+		return
+	}
+
+	// Remove physical file from disk
+	filePath := mediaFile.Path
+	if _, err := os.Stat(filePath); err == nil {
+		if err := os.Remove(filePath); err != nil {
+			log.Error(ctx, "Failed to delete track file from disk", "err", err, "path", filePath)
+			http.Error(w, "failed to delete file from disk", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	// Delete from database
+	if err := api.ds.MediaFile(ctx).Delete(trackID); err != nil {
+		log.Error(ctx, "Failed to delete track from database", "err", err, "id", trackID)
+		http.Error(w, "failed to delete track from database", http.StatusInternalServerError)
+		return
+	}
+
+	// Clean up parent directory if empty
+	parentDir := filepath.Dir(filePath)
+	musicFolder := conf.Server.MusicFolder
+	if parentDir != musicFolder && filepath.Base(parentDir) != "_Inbox" {
+		entries, _ := os.ReadDir(parentDir)
+		if len(entries) == 0 {
+			_ = os.Remove(parentDir)
+		} else if len(entries) == 1 && strings.HasPrefix(strings.ToLower(entries[0].Name()), "cover.") {
+			_ = os.Remove(filepath.Join(parentDir, entries[0].Name()))
+			_ = os.Remove(parentDir)
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]any{
+		"success": true,
+		"deleted": trackID,
 	})
 }

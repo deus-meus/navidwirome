@@ -253,4 +253,33 @@ describe('SongContextMenu', () => {
       )
     })
   })
+
+  describe('Delete Track action', () => {
+    it('shows Delete Track action when user is admin', async () => {
+      localStorage.setItem('role', 'admin')
+      render(
+        <TestContext>
+          <SongContextMenu record={{ id: 'song1', size: 1 }} resource="song" />
+        </TestContext>,
+      )
+      fireEvent.click(screen.getAllByRole('button')[1])
+      await waitFor(() =>
+        expect(screen.getByText(/resources\.song\.actions\.deleteTrack/)).toBeInTheDocument(),
+      )
+    })
+
+    it('hides Delete Track action when user is not admin', async () => {
+      localStorage.removeItem('role')
+      localStorage.setItem('canEditTags', 'true')
+      render(
+        <TestContext>
+          <SongContextMenu record={{ id: 'song1', size: 1 }} resource="song" />
+        </TestContext>,
+      )
+      fireEvent.click(screen.getAllByRole('button')[1])
+      await waitFor(() =>
+        expect(screen.queryByText(/resources\.song\.actions\.deleteTrack/)).toBeNull(),
+      )
+    })
+  })
 })

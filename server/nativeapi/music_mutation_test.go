@@ -5,6 +5,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"time"
 
 	"github.com/navidrome/navidrome/conf"
@@ -28,9 +29,11 @@ var _ = Describe("Music Mutation Endpoints", func() {
 		uploaderUser   model.User
 		editorUser     model.User
 		regularUser    model.User
+		adminUser      model.User
 		uploaderToken  string
 		editorToken    string
 		regularToken   string
+		adminToken     string
 	)
 
 	BeforeEach(func() {
@@ -50,6 +53,11 @@ var _ = Describe("Music Mutation Endpoints", func() {
 
 		auth.Init(ds)
 
+		adminUser = model.User{
+			ID:       "u-admin",
+			UserName: "admin",
+			IsAdmin:  true,
+		}
 		uploaderUser = model.User{
 			ID:        "u-uploader",
 			UserName:  "uploader",
@@ -70,10 +78,12 @@ var _ = Describe("Music Mutation Endpoints", func() {
 			CanEditTags: false,
 		}
 
+		Expect(userRepo.Put(&adminUser)).To(Succeed())
 		Expect(userRepo.Put(&uploaderUser)).To(Succeed())
 		Expect(userRepo.Put(&editorUser)).To(Succeed())
 		Expect(userRepo.Put(&regularUser)).To(Succeed())
 
+		adminToken, _ = auth.CreateToken(&adminUser)
 		uploaderToken, _ = auth.CreateToken(&uploaderUser)
 		editorToken, _ = auth.CreateToken(&editorUser)
 		regularToken, _ = auth.CreateToken(&regularUser)
@@ -134,6 +144,42 @@ var _ = Describe("Music Mutation Endpoints", func() {
 
 			router.ServeHTTP(w, req)
 			Expect(w.Code).To(Equal(http.StatusOK))
+		})
+	})
+
+	Describe("DELETE /music/track/:id", func() {
+		It("rejects delete from non-admin users with 403 Forbidden", func() {
+			req := httptest.NewRequest("DELETE", "/music/track/song-1", nil)
+			req.Header.Set("x-nd-authorization", "Bearer "+regularToken)
+			router.ServeHTTP(w, req)
+			Expect(w.Code).To(Equal(http.StatusForbidden))
+
+			w2 := httptest.NewRecorder()
+			req2 := httptest.NewRequest("DELETE", "/music/track/song-1", nil)
+			req2.Header.Set("x-nd-authorization", "Bearer "+editorToken)
+			router.ServeHTTP(w2, req2)
+			Expect(w2.Code).To(Equal(http.StatusForbidden))
+		})
+
+		It("accepts delete from admin and removes physical file and db record", func() {
+			tmpFile, err := os.CreateTemp("", "test_delete_*.mp3")
+			Expect(err).NotTo(HaveOccurred())
+			tmpPath := tmpFile.Name()
+			tmpFile.Close()
+
+			Expect(mfRepo.Put(&model.MediaFile{ID: "song-del-1", Title: "Delete Me", Path: tmpPath})).To(Succeed())
+
+			req := httptest.NewRequest("DELETE", "/music/track/song-del-1", nil)
+			req.Header.Set("x-nd-authorization", "Bearer "+adminToken)
+
+			router.ServeHTTP(w, req)
+			Expect(w.Code).To(Equal(http.StatusOK))
+
+			_, statErr := os.Stat(tmpPath)
+			Expect(os.IsNotExist(statErr)).To(BeTrue())
+
+			_, dbErr := mfRepo.Get("song-del-1")
+			Expect(dbErr).To(HaveOccurred())
 		})
 	})
 })

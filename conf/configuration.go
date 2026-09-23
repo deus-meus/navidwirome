@@ -126,6 +126,7 @@ type configOptions struct {
 	Deezer                          deezerOptions       `json:",omitzero"`
 	ListenBrainz                    listenBrainzOptions `json:",omitzero"`
 	Jellyfin                        jellyfinOptions     `json:",omitzero"`
+	AcoustID                        acoustIDOptions     `json:",omitzero"`
 	EnableScrobbleHistory           bool
 	Tags                            map[string]TagConf `json:",omitempty"`
 	Agents                          string
@@ -227,6 +228,10 @@ type listenBrainzOptions struct {
 	BaseURL         string
 	ArtistAlgorithm string
 	TrackAlgorithm  string
+}
+
+type acoustIDOptions struct {
+	ClientKey string
 }
 
 type jellyfinOptions struct {

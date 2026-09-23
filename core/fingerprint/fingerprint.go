@@ -14,6 +14,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/navidrome/navidrome/conf"
 )
 
 var (
@@ -43,13 +45,24 @@ type Client struct {
 }
 
 func NewClient() *Client {
-	return NewClientWithURL(DefaultAcoustIDURL, 5*time.Second)
+	key := conf.Server.AcoustID.ClientKey
+	if key == "" {
+		key = os.Getenv("ND_ACOUSTID_CLIENTKEY")
+	}
+	if key == "" {
+		key = DefaultAcoustIDClientKey
+	}
+	return NewClientWithURLAndKey(DefaultAcoustIDURL, key, 5*time.Second)
 }
 
 func NewClientWithURL(endpoint string, timeout time.Duration) *Client {
+	return NewClientWithURLAndKey(endpoint, DefaultAcoustIDClientKey, timeout)
+}
+
+func NewClientWithURLAndKey(endpoint, apiKey string, timeout time.Duration) *Client {
 	return &Client{
 		endpoint:  endpoint,
-		apiKey:    DefaultAcoustIDClientKey,
+		apiKey:    apiKey,
 		searchURL: DefaultSearchURL,
 		client:    &http.Client{Timeout: timeout},
 	}

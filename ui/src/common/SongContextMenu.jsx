@@ -6,6 +6,8 @@ import {
   usePermissions,
   useTranslate,
   useDataProvider,
+  useRefresh,
+  Confirm,
 } from 'react-admin'
 import { IconButton, Menu, MenuItem } from '@material-ui/core'
 import { makeStyles } from '@material-ui/core/styles'
@@ -66,15 +68,45 @@ export const SongContextMenu = ({
   const translate = useTranslate()
   const notify = useNotify()
   const dataProvider = useDataProvider()
+  const refresh = useRefresh()
   const [anchorEl, setAnchorEl] = useState(null)
   const [playlistAnchorEl, setPlaylistAnchorEl] = useState(null)
   const [playlists, setPlaylists] = useState([])
   const [playlistsLoaded, setPlaylistsLoaded] = useState(false)
   const { permissions } = usePermissions()
-  const { canEditTags } = useUserPermissions()
+  const { canEditTags, isAdmin } = useUserPermissions()
   const [showTagEditor, setShowTagEditor] = useState(false)
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const redirect = useRedirect()
   const present = record && !record.missing
+
+  const handleDelete = async () => {
+    setDeleting(true)
+    const token = localStorage.getItem('token') || ''
+    const trackId = record.mediaFileId || record.id
+
+    try {
+      const response = await fetch(`/api/music/track/${trackId}`, {
+        method: 'DELETE',
+        headers: {
+          'x-nd-authorization': `Bearer ${token}`,
+        },
+      })
+
+      if (response.ok) {
+        notify('resources.song.notifications.trackDeleted', { type: 'info' })
+        setDeleteConfirmOpen(false)
+        refresh()
+      } else {
+        notify('resources.song.notifications.deleteError', { type: 'warning' })
+      }
+    } catch (err) {
+      notify('resources.song.notifications.deleteError', { type: 'warning' })
+    } finally {
+      setDeleting(false)
+    }
+  }
 
   const options = {
     playNow: {
@@ -178,6 +210,11 @@ export const SongContextMenu = ({
       label: translate('resources.song.actions.editTags'),
       action: () => setShowTagEditor(true),
     },
+    deleteTrack: {
+      enabled: isAdmin,
+      label: translate('resources.song.actions.deleteTrack'),
+      action: () => setDeleteConfirmOpen(true),
+    },
   }
 
   const handleClick = (e) => {
@@ -275,7 +312,11 @@ export const SongContextMenu = ({
                 }
                 disabled={showInPlaylistDisabled}
                 style={
-                  showInPlaylistDisabled ? { pointerEvents: 'auto' } : undefined
+                  key === 'deleteTrack'
+                    ? { color: '#e53935' }
+                    : showInPlaylistDisabled
+                    ? { pointerEvents: 'auto' }
+                    : undefined
                 }
               >
                 {options[key].label}
@@ -308,6 +349,16 @@ export const SongContextMenu = ({
           open={showTagEditor}
           record={record}
           onClose={() => setShowTagEditor(false)}
+        />
+      )}
+      {deleteConfirmOpen && (
+        <Confirm
+          isOpen={deleteConfirmOpen}
+          loading={deleting}
+          title={'resources.song.dialog.deleteTrackTitle'}
+          content={'resources.song.dialog.deleteTrackConfirm'}
+          onConfirm={handleDelete}
+          onClose={() => setDeleteConfirmOpen(false)}
         />
       )}
     </span>
