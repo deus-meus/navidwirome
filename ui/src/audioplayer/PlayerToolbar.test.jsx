@@ -76,6 +76,11 @@ describe('<PlayerToolbar />', () => {
       expect(listItems[0].className).toContain('toolbar')
     })
 
+    it('renders mechanical tape counter box on desktop', () => {
+      render(<PlayerToolbar id="song-1" />)
+      expect(screen.getByText(/TAPE COUNTER/i)).toBeInTheDocument()
+    })
+
     it('disables save queue button when isRadio is true', () => {
       render(<PlayerToolbar id="song-1" isRadio={true} />)
 

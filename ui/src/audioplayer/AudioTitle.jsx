@@ -55,34 +55,40 @@ const AudioTitle = React.memo(({ audioInfo, gainInfo, isMobile }) => {
 
   return (
     <Link to={linkTo} className={className} ref={dragSongRef}>
-      <span>
-        <span className={clsx(classes.songTitle, 'songTitle')}>{title}</span>
-        {isDesktop && (
-          <QualityInfo
-            record={qi}
-            className={classes.qualityInfo}
-            {...gainInfo}
-            {...transcodeProps}
-          />
-        )}
-      </span>
-      {isMobile ? (
-        <>
+      <div className={classes.cassetteBadge}>
+        <span className={classes.tapeLabel}>TAPE A</span>
+        <span className={classes.tapeType}>C-90</span>
+      </div>
+      <div className={classes.trackInfoBlock}>
+        <span>
+          <span className={clsx(classes.songTitle, 'songTitle')}>{title}</span>
+          {isDesktop && (
+            <QualityInfo
+              record={qi}
+              className={classes.qualityInfo}
+              {...gainInfo}
+              {...transcodeProps}
+            />
+          )}
+        </span>
+        {isMobile ? (
+          <>
+            <span className={classes.songInfo}>
+              <span className={'songArtist'}>{song.artist}</span>
+            </span>
+            <span className={clsx(classes.songInfo, classes.songAlbum)}>
+              <span className={'songAlbum'}>{song.album}</span>
+              {song.year ? ` - ${song.year}` : ''}
+            </span>
+          </>
+        ) : (
           <span className={classes.songInfo}>
-            <span className={'songArtist'}>{song.artist}</span>
-          </span>
-          <span className={clsx(classes.songInfo, classes.songAlbum)}>
+            <span className={'songArtist'}>{song.artist}</span> -{' '}
             <span className={'songAlbum'}>{song.album}</span>
             {song.year ? ` - ${song.year}` : ''}
           </span>
-        </>
-      ) : (
-        <span className={classes.songInfo}>
-          <span className={'songArtist'}>{song.artist}</span> -{' '}
-          <span className={'songAlbum'}>{song.album}</span>
-          {song.year ? ` - ${song.year}` : ''}
-        </span>
-      )}
+        )}
+      </div>
     </Link>
   )
 })

@@ -55,4 +55,19 @@ describe('<AudioTitle />', () => {
     const link = screen.getByRole('link')
     expect(link.getAttribute('href')).toBe('/album/album-1/show')
   })
+
+  it('renders cassette tape badge and monospace audio specs', () => {
+    const song = {
+      ...baseSong,
+      title: 'Smells Like Teen Spirit',
+      artist: 'Nirvana',
+      suffix: 'flac',
+      bitRate: 1411,
+    }
+    const audioInfo = { trackId: 'track-1', song }
+    render(<AudioTitle audioInfo={audioInfo} gainInfo={{}} isMobile={false} />)
+    expect(screen.getByText(/TAPE A/i)).toBeInTheDocument()
+    expect(screen.getByText(/C-90/i)).toBeInTheDocument()
+  })
 })
+
