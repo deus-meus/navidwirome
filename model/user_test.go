@@ -80,4 +80,44 @@ var _ = Describe("User", func() {
 			})
 		})
 	})
+
+	Describe("AllowedToUpload", func() {
+		It("returns true if user is admin", func() {
+			user.IsAdmin = true
+			user.CanUpload = false
+			Expect(user.AllowedToUpload()).To(BeTrue())
+		})
+
+		It("returns true if user has CanUpload flag", func() {
+			user.IsAdmin = false
+			user.CanUpload = true
+			Expect(user.AllowedToUpload()).To(BeTrue())
+		})
+
+		It("returns false if user is neither admin nor has CanUpload flag", func() {
+			user.IsAdmin = false
+			user.CanUpload = false
+			Expect(user.AllowedToUpload()).To(BeFalse())
+		})
+	})
+
+	Describe("AllowedToEditTags", func() {
+		It("returns true if user is admin", func() {
+			user.IsAdmin = true
+			user.CanEditTags = false
+			Expect(user.AllowedToEditTags()).To(BeTrue())
+		})
+
+		It("returns true if user has CanEditTags flag", func() {
+			user.IsAdmin = false
+			user.CanEditTags = true
+			Expect(user.AllowedToEditTags()).To(BeTrue())
+		})
+
+		It("returns false if user is neither admin nor has CanEditTags flag", func() {
+			user.IsAdmin = false
+			user.CanEditTags = false
+			Expect(user.AllowedToEditTags()).To(BeFalse())
+		})
+	})
 })

@@ -10,6 +10,8 @@ type User struct {
 	Name         string     `structs:"name" json:"name"`
 	Email        string     `structs:"email" json:"email"`
 	IsAdmin      bool       `structs:"is_admin" json:"isAdmin"`
+	CanUpload    bool       `structs:"can_upload" json:"canUpload"`
+	CanEditTags  bool       `structs:"can_edit_tags" json:"canEditTags"`
 	LastLoginAt  *time.Time `structs:"last_login_at" json:"lastLoginAt"`
 	LastAccessAt *time.Time `structs:"last_access_at" json:"lastAccessAt"`
 	CreatedAt    time.Time  `structs:"created_at" json:"createdAt"`
@@ -41,6 +43,14 @@ func (u User) HasLibraryAccess(libraryID int) bool {
 		}
 	}
 	return false
+}
+
+func (u User) AllowedToUpload() bool {
+	return u.IsAdmin || u.CanUpload
+}
+
+func (u User) AllowedToEditTags() bool {
+	return u.IsAdmin || u.CanEditTags
 }
 
 type Users []User
