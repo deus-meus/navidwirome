@@ -32,10 +32,124 @@ const useStyles = makeStyles((theme) => ({
     color: theme.palette.text.primary,
     fontWeight: 'bold',
   },
+  zineBanner: {
+    backgroundColor: '#121212',
+    color: '#fcf9f8',
+    padding: '8px',
+    margin: '8px 8px 4px 8px',
+    transform: 'rotate(-1deg)',
+    boxShadow: '3px 3px 0px #1d4ed8',
+    userSelect: 'none',
+  },
+  zineBannerTop: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: '4px',
+  },
+  undergroundBadge: {
+    fontFamily: "'Space Mono', monospace",
+    fontSize: '9px',
+    textTransform: 'uppercase',
+    backgroundColor: '#fed01b',
+    color: '#1c1b1b',
+    padding: '1px 4px',
+    fontWeight: 700,
+  },
+  recBadge: {
+    fontFamily: "'Space Mono', monospace",
+    fontSize: '9px',
+    color: '#93c5fd',
+    fontWeight: 700,
+  },
+  zineTitle: {
+    fontFamily: "'Syne', sans-serif",
+    fontSize: '15px',
+    textTransform: 'uppercase',
+    fontWeight: 800,
+    margin: 0,
+    letterSpacing: '-0.02em',
+  },
+  zineSubtitle: {
+    fontFamily: "'Space Mono', monospace",
+    fontSize: '9px',
+    opacity: 0.7,
+    letterSpacing: '0.1em',
+    margin: 0,
+  },
+  runIdBox: {
+    backgroundColor: '#ffffff',
+    padding: '4px 8px',
+    margin: '0 8px 8px 8px',
+    border: '2px solid #1c1b1b',
+    boxShadow: '2px 2px 0px #1c1b1b',
+    transform: 'rotate(0.5deg)',
+    userSelect: 'none',
+  },
+  runIdLabel: {
+    fontFamily: "'Space Mono', monospace",
+    fontSize: '8px',
+    textTransform: 'uppercase',
+    color: '#3b4957',
+    display: 'block',
+    fontWeight: 700,
+  },
+  runIdText: {
+    fontFamily: "'Space Mono', monospace",
+    fontSize: '10px',
+    color: '#1d4ed8',
+    fontWeight: 700,
+    margin: 0,
+  },
+  statusWrapper: {
+    padding: '8px',
+    marginTop: 'auto',
+    userSelect: 'none',
+  },
+  statusBox: {
+    backgroundColor: '#006577',
+    color: '#fcf9f8',
+    padding: '6px',
+    border: '2px solid #1c1b1b',
+    boxShadow: '2px 2px 0px #1c1b1b',
+    transform: 'rotate(1deg)',
+    marginBottom: '6px',
+  },
+  statusLabel: {
+    fontFamily: "'Space Mono', monospace",
+    fontSize: '8px',
+    textTransform: 'uppercase',
+    display: 'block',
+    fontWeight: 700,
+  },
+  statusVal: {
+    fontFamily: "'Space Mono', monospace",
+    fontSize: '11px',
+    fontWeight: 700,
+  },
+  warningBox: {
+    backgroundColor: '#fcf9f8',
+    padding: '4px 6px',
+    color: '#3b4957',
+    fontFamily: "'Space Mono', monospace",
+    fontSize: '8px',
+    border: '1px solid #1c1b1b',
+  },
 }))
 
-const translatedResourceName = (resource, translate) =>
-  translate(`resources.${resource.name}.name`, {
+const ZINE_RESOURCE_NAMES = {
+  album: 'DISCOVER / VAULT',
+  playlist: 'MIXTAPES & CASSETTES',
+  artist: 'BANDS & ARTISTS',
+  song: 'VINYL / CD CRATES',
+  radio: 'LOCAL RADIO FM',
+}
+
+const translatedResourceName = (resource, translate) => {
+  if (ZINE_RESOURCE_NAMES[resource.name]) {
+    return ZINE_RESOURCE_NAMES[resource.name]
+  }
+  return translate(`resources.${resource.name}.name`, {
     smart_count: 2,
     _:
       resource.options && resource.options.label
@@ -45,6 +159,7 @@ const translatedResourceName = (resource, translate) =>
           })
         : humanize(pluralize(resource.name)),
   })
+}
 
 const Menu = ({ dense = false }) => {
   const open = useSelector((state) => state.admin.ui.sidebarOpen)
@@ -112,12 +227,28 @@ const Menu = ({ dense = false }) => {
         [classes.closed]: !open,
       })}
     >
+      {open && (
+        <div className={classes.zineBanner}>
+          <div className={classes.zineBannerTop}>
+            <span className={classes.undergroundBadge}>UNDERGROUND AUDIO</span>
+            <span className={classes.recBadge}>REC ●</span>
+          </div>
+          <h2 className={classes.zineTitle}>NAVIDROME // V.94</h2>
+          <p className={classes.zineSubtitle}>AUDIOZINE RIOT CRATE</p>
+        </div>
+      )}
+      {open && (
+        <div className={classes.runIdBox}>
+          <span className={classes.runIdLabel}>XEROX RUN IDENTIFIER:</span>
+          <p className={classes.runIdText}>CASSETTE-STREAM-DECK #882</p>
+        </div>
+      )}
       {open && <LibrarySelector />}
       <SubMenu
         handleToggle={() => handleToggle('menuAlbumList')}
         isOpen={state.menuAlbumList}
         sidebarIsOpen={open}
-        name="menu.albumList"
+        name={open ? 'DISCOVER / VAULT' : 'menu.albumList'}
         icon={<AlbumIcon />}
         dense={dense}
       >
@@ -138,6 +269,17 @@ const Menu = ({ dense = false }) => {
         </>
       ) : (
         resources.filter(subItems('playlist')).map(renderResourceMenuItemLink)
+      )}
+      {open && (
+        <div className={classes.statusWrapper}>
+          <div className={classes.statusBox}>
+            <span className={classes.statusLabel}>SERVER STATUS // SUBSONIC</span>
+            <span className={classes.statusVal}>ONLINE 99.4% CHUNKED</span>
+          </div>
+          <div className={classes.warningBox}>
+            PULL TAPE BEFORE EJECTING. DO NOT DUPLICATE COMMERCIALLY.
+          </div>
+        </div>
       )}
     </div>
   )
