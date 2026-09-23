@@ -4,6 +4,7 @@
 .envrc
 /navidrome
 /navidwirome
+/run.sh
 /iTunes*.xml
 /tmp
 /bin
