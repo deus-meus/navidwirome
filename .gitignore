@@ -3,6 +3,7 @@
 .vscode
 .envrc
 /navidrome
+/navidwirome
 /iTunes*.xml
 /tmp
 /bin
@@ -27,6 +28,7 @@ docker-compose.yml
 !contrib/docker-compose.yml
 binaries
 navidrome-*
+navidwirome-*
 /ndpgen
 AGENTS.md
 .github/prompts
