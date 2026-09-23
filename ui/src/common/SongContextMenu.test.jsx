@@ -224,4 +224,33 @@ describe('SongContextMenu', () => {
       expect(data['actualSongId']).toBeDefined()
     })
   })
+
+  describe('Edit Tags action', () => {
+    it('shows Edit Tags action when user has canEditTags permission', async () => {
+      localStorage.setItem('canEditTags', 'true')
+      render(
+        <TestContext>
+          <SongContextMenu record={{ id: 'song1', size: 1 }} resource="song" />
+        </TestContext>,
+      )
+      fireEvent.click(screen.getAllByRole('button')[1])
+      await waitFor(() =>
+        expect(screen.getByText(/resources\.song\.actions\.editTags/)).toBeInTheDocument(),
+      )
+    })
+
+    it('hides Edit Tags action when user lacks canEditTags permission', async () => {
+      localStorage.removeItem('canEditTags')
+      localStorage.removeItem('role')
+      render(
+        <TestContext>
+          <SongContextMenu record={{ id: 'song1', size: 1 }} resource="song" />
+        </TestContext>,
+      )
+      fireEvent.click(screen.getAllByRole('button')[1])
+      await waitFor(() =>
+        expect(screen.queryByText(/resources\.song\.actions\.editTags/)).toBeNull(),
+      )
+    })
+  })
 })

@@ -51,7 +51,19 @@
         "download": "Download",
         "playNext": "Play Next",
         "info": "Get Info",
-        "instantMix": "Instant Mix"
+        "instantMix": "Instant Mix",
+        "editTags": "Edit Tags"
+      },
+      "tagEditor": {
+        "title": "Edit Metadata",
+        "autoDetect": "Auto-Detect Tags",
+        "autoDetectSuccess": "Tags auto-detected successfully",
+        "autoDetectError": "Could not identify tags for this track",
+        "save": "Save Changes"
+      },
+      "notifications": {
+        "tagsUpdated": "Track metadata updated successfully",
+        "tagsUpdateError": "Failed to update track metadata"
       }
     },
     "album": {

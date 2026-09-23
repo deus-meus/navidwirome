@@ -27,6 +27,8 @@ import config from '../config'
 import { playSimilar } from './playbackActions.js'
 import { formatBytes } from '../utils'
 import { useRedirect } from 'react-admin'
+import { useUserPermissions } from './useUserPermissions'
+import { TagEditorDialog } from '../song/TagEditorDialog'
 
 const useStyles = makeStyles({
   noWrap: {
@@ -69,7 +71,10 @@ export const SongContextMenu = ({
   const [playlists, setPlaylists] = useState([])
   const [playlistsLoaded, setPlaylistsLoaded] = useState(false)
   const { permissions } = usePermissions()
+  const { canEditTags } = useUserPermissions()
+  const [showTagEditor, setShowTagEditor] = useState(false)
   const redirect = useRedirect()
+  const present = record && !record.missing
 
   const options = {
     playNow: {
@@ -168,6 +173,11 @@ export const SongContextMenu = ({
         dispatch(openExtendedInfoDialog(fullRecord))
       },
     },
+    editTags: {
+      enabled: canEditTags && present,
+      label: translate('resources.song.actions.editTags'),
+      action: () => setShowTagEditor(true),
+    },
   }
 
   const handleClick = (e) => {
@@ -236,8 +246,6 @@ export const SongContextMenu = ({
     return null
   }
 
-  const present = !record.missing
-
   return (
     <span className={clsx(classes.noWrap, className)}>
       <LoveButton
@@ -295,6 +303,13 @@ export const SongContextMenu = ({
           </MenuItem>
         ))}
       </Menu>
+      {showTagEditor && (
+        <TagEditorDialog
+          open={showTagEditor}
+          record={record}
+          onClose={() => setShowTagEditor(false)}
+        />
+      )}
     </span>
   )
 }
