@@ -185,9 +185,7 @@ func (api *Router) handleMusicUpload(w http.ResponseWriter, r *http.Request) {
 	// Download album cover if target is an organized album folder
 	albumDir := filepath.Dir(finalPath)
 	if albumDir != musicFolder && filepath.Base(albumDir) != "_Inbox" {
-		if coverURL != "" {
-			_ = client.DownloadCoverArt(ctx, coverURL, albumDir)
-		}
+		_ = client.DownloadCoverArtWithFallback(ctx, coverURL, artist, title, albumDir)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -314,10 +312,20 @@ func (api *Router) handleUpdateTrackTags(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	musicFolder := conf.Server.MusicFolder
+	if musicFolder == "" {
+		musicFolder = os.TempDir()
+	}
+
+	fullSourcePath := mediaFile.Path
+	if !filepath.IsAbs(fullSourcePath) {
+		fullSourcePath = filepath.Join(musicFolder, fullSourcePath)
+	}
+
 	// Update physical file tags if file exists
-	if _, err := os.Stat(mediaFile.Path); err == nil {
-		if err := tagger.WriteTags(mediaFile.Path, updates); err != nil {
-			log.Error(ctx, "Failed to write tags to audio file", "err", err, "path", mediaFile.Path)
+	if _, err := os.Stat(fullSourcePath); err == nil {
+		if err := tagger.WriteTags(fullSourcePath, updates); err != nil {
+			log.Error(ctx, "Failed to write tags to audio file", "err", err, "path", fullSourcePath)
 			http.Error(w, "failed to write tags to audio file", http.StatusInternalServerError)
 			return
 		}
@@ -335,32 +343,27 @@ func (api *Router) handleUpdateTrackTags(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Reorganize physical file if artist and album are known
-	musicFolder := conf.Server.MusicFolder
-	if musicFolder == "" {
-		musicFolder = os.TempDir()
-	}
 	if mediaFile.Artist != "" && mediaFile.Album != "" {
-		targetPath := organizer.ResolveTargetPath(musicFolder, mediaFile.Artist, mediaFile.Album, updates.TrackNumber, mediaFile.Title, filepath.Ext(mediaFile.Path))
-		if targetPath != mediaFile.Path {
-			if newPath, err := organizer.MoveFileSafely(mediaFile.Path, targetPath); err == nil {
-				mediaFile.Path = newPath
+		targetPath := organizer.ResolveTargetPath(musicFolder, mediaFile.Artist, mediaFile.Album, updates.TrackNumber, mediaFile.Title, filepath.Ext(fullSourcePath))
+		if targetPath != fullSourcePath {
+			if newPath, err := organizer.MoveFileSafely(fullSourcePath, targetPath); err == nil {
+				if relPath, relErr := filepath.Rel(musicFolder, newPath); relErr == nil && !strings.HasPrefix(relPath, "..") {
+					mediaFile.Path = relPath
+				} else {
+					mediaFile.Path = newPath
+				}
+				fullSourcePath = newPath
 			}
 		}
 	}
 
 	// Download album cover if not present
-	albumDir := filepath.Dir(mediaFile.Path)
+	albumDir := filepath.Dir(fullSourcePath)
 	if albumDir != musicFolder && filepath.Base(albumDir) != "_Inbox" {
 		coverPath := filepath.Join(albumDir, "cover.jpg")
 		if _, err := os.Stat(coverPath); os.IsNotExist(err) {
 			client := fingerprint.NewClient()
-			coverURL := updates.CoverArtURL
-			if coverURL == "" && mediaFile.Artist != "" && mediaFile.Title != "" {
-				_, coverURL, _ = client.SearchTrack(ctx, mediaFile.Artist, mediaFile.Title)
-			}
-			if coverURL != "" {
-				_ = client.DownloadCoverArt(ctx, coverURL, albumDir)
-			}
+			_ = client.DownloadCoverArtWithFallback(ctx, updates.CoverArtURL, mediaFile.Artist, mediaFile.Title, albumDir)
 		}
 	}
 

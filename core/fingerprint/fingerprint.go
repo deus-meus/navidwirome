@@ -38,10 +38,11 @@ type TrackMetadata struct {
 }
 
 type Client struct {
-	endpoint  string
-	apiKey    string
-	searchURL string
-	client    *http.Client
+	endpoint       string
+	apiKey         string
+	searchURL      string
+	client         *http.Client
+	downloadClient *http.Client
 }
 
 func NewClient() *Client {
@@ -61,10 +62,11 @@ func NewClientWithURL(endpoint string, timeout time.Duration) *Client {
 
 func NewClientWithURLAndKey(endpoint, apiKey string, timeout time.Duration) *Client {
 	return &Client{
-		endpoint:  endpoint,
-		apiKey:    apiKey,
-		searchURL: DefaultSearchURL,
-		client:    &http.Client{Timeout: timeout},
+		endpoint:       endpoint,
+		apiKey:         apiKey,
+		searchURL:      DefaultSearchURL,
+		client:         &http.Client{Timeout: timeout},
+		downloadClient: &http.Client{Timeout: 15 * time.Second},
 	}
 }
 
@@ -276,8 +278,14 @@ func (c *Client) DownloadCoverArt(ctx context.Context, coverURL, targetDir strin
 	if err != nil {
 		return err
 	}
+	req.Header.Set("User-Agent", "Navidwirome/1.0 (https://github.com/navidrome/navidrome)")
 
-	resp, err := c.client.Do(req)
+	client := c.downloadClient
+	if client == nil {
+		client = c.client
+	}
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -302,4 +310,38 @@ func (c *Client) DownloadCoverArt(ctx context.Context, coverURL, targetDir strin
 	out.Close()
 
 	return os.Rename(tmpFile, targetFile)
+}
+
+// DownloadCoverArtWithFallback attempts to download cover art from primaryURL.
+// If primaryURL is empty or fails, it falls back to querying iTunes search with artist and title.
+func (c *Client) DownloadCoverArtWithFallback(ctx context.Context, primaryURL, artist, title, targetDir string) error {
+	targetFile := filepath.Join(targetDir, "cover.jpg")
+	if _, err := os.Stat(targetFile); err == nil {
+		return nil
+	}
+
+	var primaryErr error
+	if strings.TrimSpace(primaryURL) != "" {
+		if err := c.DownloadCoverArt(ctx, primaryURL, targetDir); err == nil {
+			return nil
+		} else {
+			primaryErr = err
+		}
+	}
+
+	cleanArtist := strings.TrimSpace(artist)
+	cleanTitle := strings.TrimSpace(title)
+	if cleanArtist != "" || cleanTitle != "" {
+		itunesCover, err := c.SearchArtworkURL(ctx, cleanArtist, cleanTitle)
+		if err == nil && itunesCover != "" {
+			if err := c.DownloadCoverArt(ctx, itunesCover, targetDir); err == nil {
+				return nil
+			}
+		}
+	}
+
+	if primaryErr != nil {
+		return fmt.Errorf("primary cover download failed: %w", primaryErr)
+	}
+	return errors.New("no cover art available")
 }

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/navidrome/navidrome/conf"
@@ -144,6 +145,35 @@ var _ = Describe("Music Mutation Endpoints", func() {
 
 			router.ServeHTTP(w, req)
 			Expect(w.Code).To(Equal(http.StatusOK))
+		})
+
+		It("resolves relative path and reorganizes track with fallback cover check", func() {
+			testMusicDir := GinkgoT().TempDir()
+			conf.Server.MusicFolder = testMusicDir
+
+			inboxDir := filepath.Join(testMusicDir, "_Inbox")
+			Expect(os.MkdirAll(inboxDir, 0755)).To(Succeed())
+			trackFile := filepath.Join(inboxDir, "track.mp3")
+			Expect(os.WriteFile(trackFile, []byte("fake-mp3-audio"), 0644)).To(Succeed())
+
+			Expect(mfRepo.Put(&model.MediaFile{ID: "song-rel", Title: "Old", Path: "_Inbox/track.mp3"})).To(Succeed())
+
+			payload := `{"title":"New Song","artist":"Cool Artist","album":"Great Album"}`
+			req := httptest.NewRequest("PUT", "/music/track/song-rel/tags", bytes.NewBufferString(payload))
+			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("x-nd-authorization", "Bearer "+editorToken)
+
+			router.ServeHTTP(w, req)
+			Expect(w.Code).To(Equal(http.StatusOK))
+
+			updated, err := mfRepo.Get("song-rel")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(updated.Title).To(Equal("New Song"))
+			Expect(updated.Artist).To(Equal("Cool Artist"))
+			Expect(updated.Album).To(Equal("Great Album"))
+
+			expectedMovedPath := filepath.Join(testMusicDir, "Cool Artist", "Great Album", "New Song.mp3")
+			Expect(expectedMovedPath).To(BeAnExistingFile())
 		})
 	})
 

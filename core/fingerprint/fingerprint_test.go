@@ -2,6 +2,7 @@ package fingerprint_test
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -148,6 +149,90 @@ func TestDownloadCoverArt(t *testing.T) {
 	// Idempotent test: if cover.jpg already exists, it shouldn't overwrite or error
 	err = client.DownloadCoverArt(context.Background(), ts.URL, tmpDir)
 	require.NoError(t, err)
+}
+
+func TestDownloadCoverArt_UserAgent(t *testing.T) {
+	var receivedUserAgent string
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		receivedUserAgent = r.Header.Get("User-Agent")
+		w.Header().Set("Content-Type", "image/jpeg")
+		w.Write([]byte("fake-jpeg"))
+	}))
+	defer ts.Close()
+
+	tmpDir := t.TempDir()
+	client := fingerprint.NewClient()
+	err := client.DownloadCoverArt(context.Background(), ts.URL, tmpDir)
+	require.NoError(t, err)
+	assert.Contains(t, receivedUserAgent, "Navidwirome")
+}
+
+func TestDownloadCoverArtWithFallback_PrimarySucceeds(t *testing.T) {
+	primaryCalled := false
+	fallbackCalled := false
+
+	primaryServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		primaryCalled = true
+		w.Header().Set("Content-Type", "image/jpeg")
+		w.Write([]byte("primary-art"))
+	}))
+	defer primaryServer.Close()
+
+	fallbackImageServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "image/jpeg")
+		w.Write([]byte("fallback-art"))
+	}))
+	defer fallbackImageServer.Close()
+
+	searchServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fallbackCalled = true
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprintf(w, `{"resultCount":1,"results":[{"collectionName":"Album","artworkUrl100":"%s"}]}`, fallbackImageServer.URL)
+	}))
+	defer searchServer.Close()
+
+	client := fingerprint.NewClient()
+	client.SetSearchURL(searchServer.URL)
+
+	tmpDir := t.TempDir()
+	err := client.DownloadCoverArtWithFallback(context.Background(), primaryServer.URL, "Artist", "Song", tmpDir)
+	require.NoError(t, err)
+	assert.True(t, primaryCalled)
+	assert.False(t, fallbackCalled)
+
+	data, err := os.ReadFile(filepath.Join(tmpDir, "cover.jpg"))
+	require.NoError(t, err)
+	assert.Equal(t, []byte("primary-art"), data)
+}
+
+func TestDownloadCoverArtWithFallback_PrimaryFails_FallbackSucceeds(t *testing.T) {
+	primaryServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+	}))
+	defer primaryServer.Close()
+
+	fallbackImageServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "image/jpeg")
+		w.Write([]byte("fallback-art"))
+	}))
+	defer fallbackImageServer.Close()
+
+	searchServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprintf(w, `{"resultCount":1,"results":[{"collectionName":"Album","artworkUrl100":"%s"}]}`, fallbackImageServer.URL)
+	}))
+	defer searchServer.Close()
+
+	client := fingerprint.NewClient()
+	client.SetSearchURL(searchServer.URL)
+
+	tmpDir := t.TempDir()
+	err := client.DownloadCoverArtWithFallback(context.Background(), primaryServer.URL, "Artist", "Song", tmpDir)
+	require.NoError(t, err)
+
+	data, err := os.ReadFile(filepath.Join(tmpDir, "cover.jpg"))
+	require.NoError(t, err)
+	assert.Equal(t, []byte("fallback-art"), data)
 }
 
 func TestIdentifyRealFile(t *testing.T) {
