@@ -11,7 +11,12 @@ let store
 const mockPermissions = vi.hoisted(() => ({ value: 'admin' }))
 
 vi.mock('react-admin', () => ({
-  AppBar: ({ userMenu }) => <div data-testid="appbar">{userMenu}</div>,
+  AppBar: ({ userMenu, children }) => (
+    <div data-testid="appbar">
+      {children}
+      {userMenu}
+    </div>
+  ),
   useTranslate: () => (x) => x,
   usePermissions: () => ({ permissions: mockPermissions.value }),
   getResources: () => [],
@@ -110,4 +115,15 @@ describe('<AppBar />', () => {
     )
     expect(screen.queryAllByText('menu.upload')).toHaveLength(0)
   })
+
+  it('renders Typewriter Finder prompt and streaming status badge', () => {
+    render(
+      <Provider store={store}>
+        <AppBar />
+      </Provider>,
+    )
+    expect(screen.getByText(/TYPEWRITER FINDER/i)).toBeInTheDocument()
+    expect(screen.getByText(/STREAMING FLAC DIRECT/i)).toBeInTheDocument()
+  })
 })
+

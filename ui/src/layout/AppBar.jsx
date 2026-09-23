@@ -167,8 +167,126 @@ const CustomUserMenu = ({ onClick, ...rest }) => {
   )
 }
 
+const useHeaderStyles = makeStyles(
+  (theme) => ({
+    headerContainer: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      width: '100%',
+      padding: '0 8px',
+    },
+    finderWrapper: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '6px',
+      flex: 1,
+      maxWidth: 420,
+    },
+    finderBadge: {
+      backgroundColor: '#1c1b1b',
+      color: '#fcf9f8',
+      fontFamily: "'Space Mono', monospace",
+      fontSize: '11px',
+      fontWeight: 700,
+      padding: '3px 6px',
+      whiteSpace: 'nowrap',
+      letterSpacing: '0.05em',
+      userSelect: 'none',
+    },
+    finderInputBox: {
+      display: 'flex',
+      alignItems: 'center',
+      flex: 1,
+      backgroundColor: '#ffffff',
+      border: '2px solid #1c1b1b',
+      boxShadow: '2px 2px 0px #1c1b1b',
+      padding: '2px 8px',
+    },
+    finderPrompt: {
+      fontFamily: "'Space Mono', monospace",
+      fontSize: '12px',
+      fontWeight: 700,
+      color: '#006577',
+      marginRight: '6px',
+      userSelect: 'none',
+    },
+    finderInput: {
+      border: 'none',
+      outline: 'none',
+      width: '100%',
+      fontFamily: "'Space Mono', monospace",
+      fontSize: '12px',
+      backgroundColor: 'transparent',
+      color: '#1c1b1b',
+      '&::placeholder': {
+        color: '#8b7079',
+        opacity: 0.8,
+      },
+    },
+    streamingBadge: {
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '6px',
+      backgroundColor: '#ffe083',
+      color: '#231b00',
+      border: '1px solid #1c1b1b',
+      padding: '2px 8px',
+      fontFamily: "'Space Mono', monospace",
+      fontSize: '11px',
+      fontWeight: 700,
+      letterSpacing: '0.05em',
+      transform: 'rotate(-1deg)',
+      userSelect: 'none',
+      [theme.breakpoints.down('xs')]: {
+        display: 'none',
+      },
+    },
+    recDot: {
+      width: 8,
+      height: 8,
+      backgroundColor: '#ba1a1a',
+      borderRadius: '50%',
+      display: 'inline-block',
+      animation: '$pulse 1.5s infinite',
+    },
+    '@keyframes pulse': {
+      '0%': { opacity: 1 },
+      '50%': { opacity: 0.3 },
+      '100%': { opacity: 1 },
+    },
+  }),
+  { name: 'NDTypewriterHeader' },
+)
+
+const TypewriterFinder = () => {
+  const classes = useHeaderStyles()
+  return (
+    <div className={classes.headerContainer}>
+      <div className={classes.finderWrapper}>
+        <span className={classes.finderBadge}>TYPEWRITER FINDER:</span>
+        <div className={classes.finderInputBox}>
+          <span className={classes.finderPrompt}>&gt;&gt;</span>
+          <input
+            type="text"
+            className={classes.finderInput}
+            placeholder="SEARCH ARTISTS, TAPES, BOOTLEGS..."
+            aria-label="Typewriter Finder"
+          />
+        </div>
+      </div>
+      <div className={classes.streamingBadge}>
+        <span className={classes.recDot} />
+        <span>STREAMING FLAC DIRECT</span>
+      </div>
+    </div>
+  )
+}
+
 const AppBar = (props) => (
-  <RAAppBar {...props} container={Fragment} userMenu={<CustomUserMenu />} />
+  <RAAppBar {...props} container={Fragment} userMenu={<CustomUserMenu />}>
+    <TypewriterFinder />
+  </RAAppBar>
 )
 
 export default AppBar
