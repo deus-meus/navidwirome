@@ -5,6 +5,8 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -121,4 +123,25 @@ func MoveFileSafely(src, dst string) (string, error) {
 	_ = os.Remove(src)
 
 	return finalDst, nil
+}
+
+var cleanupPattern = regexp.MustCompile(`(?i)\s*[\(\[](official\s*(audio|video|music\s*video|lyric\s*video)?|lyrics?|lyric\s*video|visualizer|audio|hd|4k)[\)\]]`)
+
+// ParseFilenameMetadata extracts artist and title from common filename patterns (e.g. "Artist - Title").
+func ParseFilenameMetadata(filename string) (string, string) {
+	base := strings.TrimSuffix(filepath.Base(filename), filepath.Ext(filename))
+	cleaned := cleanupPattern.ReplaceAllString(base, "")
+	cleaned = strings.TrimSpace(cleaned)
+
+	parts := strings.Split(cleaned, " - ")
+	if len(parts) == 2 {
+		return strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1])
+	} else if len(parts) >= 3 {
+		if _, err := strconv.Atoi(strings.TrimSpace(parts[0])); err == nil {
+			return strings.TrimSpace(parts[1]), strings.TrimSpace(strings.Join(parts[2:], " - "))
+		}
+		return strings.TrimSpace(parts[0]), strings.TrimSpace(strings.Join(parts[1:], " - "))
+	}
+
+	return "", cleaned
 }

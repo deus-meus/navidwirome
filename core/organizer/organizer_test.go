@@ -97,3 +97,45 @@ func TestMoveFileSafely(t *testing.T) {
 	assert.NotEqual(t, dstFile, finalPath2)
 	assert.Contains(t, finalPath2, "final (1).mp3")
 }
+
+func TestParseFilenameMetadata(t *testing.T) {
+	tests := []struct {
+		filename       string
+		expectedArtist string
+		expectedTitle  string
+	}{
+		{
+			filename:       "Geese - Cobra (Official Audio).mp3",
+			expectedArtist: "Geese",
+			expectedTitle:  "Cobra",
+		},
+		{
+			filename:       "Queen - Bohemian Rhapsody [Official Video].flac",
+			expectedArtist: "Queen",
+			expectedTitle:  "Bohemian Rhapsody",
+		},
+		{
+			filename:       "01 - Pink Floyd - Time.mp3",
+			expectedArtist: "Pink Floyd",
+			expectedTitle:  "Time",
+		},
+		{
+			filename:       "Radiohead - Creep (Lyrics).opus",
+			expectedArtist: "Radiohead",
+			expectedTitle:  "Creep",
+		},
+		{
+			filename:       "Just ASong Title.wav",
+			expectedArtist: "",
+			expectedTitle:  "Just ASong Title",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.filename, func(t *testing.T) {
+			artist, title := organizer.ParseFilenameMetadata(tt.filename)
+			assert.Equal(t, tt.expectedArtist, artist)
+			assert.Equal(t, tt.expectedTitle, title)
+		})
+	}
+}

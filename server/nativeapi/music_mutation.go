@@ -103,7 +103,10 @@ func (api *Router) handleMusicUpload(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// If auto-identify requested or missing metadata, try AcoustID
-	autoTag := r.URL.Query().Get("autoTag") == "true" || r.FormValue("autoTag") == "true"
+	autoTag := r.URL.Query().Get("autoTag") == "true" ||
+		r.URL.Query().Get("auto_identify") == "true" ||
+		r.FormValue("autoTag") == "true" ||
+		r.FormValue("auto_identify") == "true"
 	if autoTag || (artist == "" && album == "") {
 		client := fingerprint.NewClient()
 		if meta, err := client.IdentifyFile(ctx, tempPath); err == nil && meta != nil {
@@ -121,6 +124,20 @@ func (api *Router) handleMusicUpload(w http.ResponseWriter, r *http.Request) {
 				Title:  title,
 				Artist: artist,
 				Album:  album,
+			})
+		}
+	}
+
+	// Fallback: If artist is still empty, parse from filename
+	if artist == "" {
+		if parsedArtist, parsedTitle := organizer.ParseFilenameMetadata(origFilename); parsedArtist != "" {
+			artist = parsedArtist
+			if title == base || title == "" {
+				title = parsedTitle
+			}
+			_ = tagger.WriteTags(tempPath, tagger.TagUpdates{
+				Title:  title,
+				Artist: artist,
 			})
 		}
 	}
