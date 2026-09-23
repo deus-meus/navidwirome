@@ -20,6 +20,14 @@ function storeAuthenticationInfo(authInfo) {
   localStorage.setItem('username', authInfo.username)
   authInfo.avatar && localStorage.setItem('avatar', authInfo.avatar)
   localStorage.setItem('role', authInfo.isAdmin ? 'admin' : 'regular')
+  localStorage.setItem(
+    'canUpload',
+    authInfo.isAdmin || authInfo.canUpload ? 'true' : 'false',
+  )
+  localStorage.setItem(
+    'canEditTags',
+    authInfo.isAdmin || authInfo.canEditTags ? 'true' : 'false',
+  )
   localStorage.setItem('subsonic-salt', authInfo.subsonicSalt)
   localStorage.setItem('subsonic-token', authInfo.subsonicToken)
   localStorage.setItem('is-authenticated', 'true')
@@ -106,6 +114,8 @@ const removeItems = () => {
   localStorage.removeItem('username')
   localStorage.removeItem('avatar')
   localStorage.removeItem('role')
+  localStorage.removeItem('canUpload')
+  localStorage.removeItem('canEditTags')
   localStorage.removeItem('subsonic-salt')
   localStorage.removeItem('subsonic-token')
   localStorage.removeItem('is-authenticated')

@@ -72,10 +72,12 @@ func doLogin(ds model.DataStore, username string, password string, w http.Respon
 
 func buildAuthPayload(user *model.User) map[string]any {
 	payload := map[string]any{
-		"id":       user.ID,
-		"name":     user.Name,
-		"username": user.UserName,
-		"isAdmin":  user.IsAdmin,
+		"id":          user.ID,
+		"name":        user.Name,
+		"username":    user.UserName,
+		"isAdmin":     user.IsAdmin,
+		"canUpload":   user.AllowedToUpload(),
+		"canEditTags": user.AllowedToEditTags(),
 	}
 	if conf.Server.EnableGravatar && user.Email != "" {
 		payload["avatar"] = gravatar.Url(user.Email, 50)
@@ -148,6 +150,7 @@ func createAdmin(ds model.DataStore) func(w http.ResponseWriter, r *http.Request
 func createAdminUser(ctx context.Context, ds model.DataStore, username, password string) error {
 	log.Warn(ctx, "Creating initial user", "user", username)
 	caser := cases.Title(language.Und)
+	now := time.Now()
 	initialUser := model.User{
 		ID:          id.NewRandom(),
 		UserName:    username,
@@ -155,7 +158,9 @@ func createAdminUser(ctx context.Context, ds model.DataStore, username, password
 		Email:       "",
 		NewPassword: password,
 		IsAdmin:     true,
-		LastLoginAt: new(time.Now()),
+		CanUpload:   true,
+		CanEditTags: true,
+		LastLoginAt: &now,
 	}
 	err := ds.User(ctx).Put(&initialUser)
 	if err != nil {

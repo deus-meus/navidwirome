@@ -8,11 +8,12 @@ import AppBar from './AppBar'
 import config from '../config'
 
 let store
+const mockPermissions = vi.hoisted(() => ({ value: 'admin' }))
 
 vi.mock('react-admin', () => ({
   AppBar: ({ userMenu }) => <div data-testid="appbar">{userMenu}</div>,
   useTranslate: () => (x) => x,
-  usePermissions: () => ({ permissions: 'admin' }),
+  usePermissions: () => ({ permissions: mockPermissions.value }),
   getResources: () => [],
 }))
 
@@ -34,6 +35,10 @@ vi.mock('../dialogs/Dialogs', () => ({
 vi.mock('../dialogs', () => ({
   AboutDialog: () => <div />,
   QuickConnectDialog: () => <div />,
+}))
+vi.mock('../upload/UploaderDialog', () => ({
+  default: () => <div />,
+  UploaderDialog: () => <div />,
 }))
 
 describe('<AppBar />', () => {
@@ -83,5 +88,26 @@ describe('<AppBar />', () => {
     )
     expect(screen.queryAllByText('menu.quickConnect.name')).toHaveLength(0)
     expect(screen.queryAllByText('menu.about')).not.toHaveLength(0)
+  })
+
+  it('shows the Upload menu item when user has upload permission', () => {
+    mockPermissions.value = 'admin'
+    render(
+      <Provider store={store}>
+        <AppBar />
+      </Provider>,
+    )
+    expect(screen.queryAllByText('menu.upload')).not.toHaveLength(0)
+  })
+
+  it('hides the Upload menu item when user lacks upload permission', () => {
+    mockPermissions.value = 'user'
+    localStorage.removeItem('canUpload')
+    render(
+      <Provider store={store}>
+        <AppBar />
+      </Provider>,
+    )
+    expect(screen.queryAllByText('menu.upload')).toHaveLength(0)
   })
 })

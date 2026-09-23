@@ -11,12 +11,15 @@ import {
   MdPerson,
   MdPhonelink,
   MdSupervisorAccount,
+  MdCloudUpload,
 } from 'react-icons/md'
 import { useSelector } from 'react-redux'
 import { makeStyles, MenuItem, ListItemIcon, Divider } from '@material-ui/core'
 import ViewListIcon from '@material-ui/icons/ViewList'
 import { Dialogs } from '../dialogs/Dialogs'
 import { AboutDialog, QuickConnectDialog } from '../dialogs'
+import { UploaderDialog } from '../upload/UploaderDialog'
+import { useUserPermissions } from '../common/useUserPermissions'
 import PersonalMenu from './PersonalMenu'
 import ActivityPanel from './ActivityPanel'
 import NowPlayingPanel from './NowPlayingPanel'
@@ -78,6 +81,7 @@ const CustomUserMenu = ({ onClick, ...rest }) => {
   const resources = useSelector(getResources)
   const classes = useStyles(rest)
   const { permissions } = usePermissions()
+  const { canUpload } = useUserPermissions()
 
   const resourceDefinition = (resourceName) =>
     resources.find((r) => r?.name === resourceName)
@@ -132,6 +136,13 @@ const CustomUserMenu = ({ onClick, ...rest }) => {
       {config.devActivityPanel && permissions === 'admin' && <ActivityPanel />}
       <UserMenu {...rest}>
         <PersonalMenu sidebarIsOpen={true} onClick={onClick} />
+        {canUpload && (
+          <DialogMenuItem
+            label={translate('menu.upload')}
+            icon={MdCloudUpload}
+            dialog={UploaderDialog}
+          />
+        )}
         {config.enableQuickConnect && (
           <DialogMenuItem
             label={translate('menu.quickConnect.name')}

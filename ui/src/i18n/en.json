@@ -182,6 +182,17 @@
         "adminAutoLibraries": "Admin users automatically have access to all libraries"
       }
     },
+    "upload": {
+      "title": "Upload Music",
+      "dragDropMessage": "Drag & drop audio files here, or click to browse",
+      "supportedFormats": "Supports MP3, FLAC, M4A, OGG, OPUS, WAV",
+      "autoIdentify": "Auto-identify tags via AcoustID / MusicBrainz",
+      "uploadAction": "Upload",
+      "notifications": {
+        "success": "Music files uploaded successfully",
+        "error": "Error uploading some or all files"
+      }
+    },
     "player": {
       "name": "Player |||| Players",
       "fields": {
@@ -619,6 +630,7 @@
     "downloadOriginalFormat": "Download in original format"
   },
   "menu": {
+    "upload": "Upload Music",
     "library": "Library",
     "librarySelector": {
       "allLibraries": "All Libraries (%{count})",
