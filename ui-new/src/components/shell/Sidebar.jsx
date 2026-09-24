@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import subsonic from '../../api/subsonic'
 import { useAuthStore } from '../../store/useAuthStore'
+import { useUIStore } from '../../store/useUIStore'
 
 export default function Sidebar() {
   const [playlists, setPlaylists] = useState([])
   const { user } = useAuthStore()
+  const { openSearch } = useUIStore()
 
   useEffect(() => {
     subsonic.getPlaylists().then(setPlaylists).catch(() => setPlaylists([]))
@@ -38,14 +40,19 @@ export default function Sidebar() {
 
       {/* Search Input */}
       <div className="p-3">
-        <div className="relative flex items-center">
-          <span className="material-symbols-outlined absolute left-2.5 text-on-surface-variant text-[18px] pointer-events-none">
+        <div
+          onClick={openSearch}
+          className="relative flex items-center cursor-pointer group"
+        >
+          <span className="material-symbols-outlined absolute left-2.5 text-on-surface-variant text-[18px] pointer-events-none group-hover:text-primary transition-colors">
             search
           </span>
           <input
             type="text"
+            readOnly
+            onClick={openSearch}
             placeholder="Search catalog (Cmd+K)"
-            className="w-full h-9 pl-8 pr-2 bg-surface-container-low border border-outline-variant rounded-lg text-on-surface placeholder:text-on-surface-variant text-xs focus:outline-none focus:border-primary transition-colors font-sans"
+            className="w-full h-9 pl-8 pr-2 bg-surface-container-low border border-outline-variant rounded-lg text-on-surface placeholder:text-on-surface-variant text-xs focus:outline-none focus:border-primary transition-colors font-sans cursor-pointer group-hover:border-primary/40"
           />
         </div>
       </div>

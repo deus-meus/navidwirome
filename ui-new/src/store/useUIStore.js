@@ -5,4 +5,12 @@ export const useUIStore = create((set) => ({
   toggleRightPanel: () => set((state) => ({ isRightPanelOpen: !state.isRightPanelOpen })),
   activeTab: 'overview', // 'overview' | 'queue' | 'history'
   setActiveTab: (tab) => set({ activeTab: tab }),
+
+  isSearchOpen: false,
+  openSearch: () => set({ isSearchOpen: true }),
+  closeSearch: () => set({ isSearchOpen: false }),
+
+  isUploadOpen: false,
+  openUpload: () => set({ isUploadOpen: true }),
+  closeUpload: () => set({ isUploadOpen: false }),
 }))
