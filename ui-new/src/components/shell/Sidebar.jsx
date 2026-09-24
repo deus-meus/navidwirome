@@ -1,30 +1,23 @@
 import { useEffect, useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
-import subsonic from '../../api/subsonic'
 import { useAuthStore } from '../../store/useAuthStore'
 import { useUIStore } from '../../store/useUIStore'
+import { usePlaylistStore } from '../../store/usePlaylistStore'
+import CreatePlaylistModal from '../modals/CreatePlaylistModal'
 
 export default function Sidebar() {
-  const [playlists, setPlaylists] = useState([])
+  const [isCreateOpen, setIsCreateOpen] = useState(false)
   const { user } = useAuthStore()
   const { openSearch, openSettings } = useUIStore()
+  const { playlists, fetchPlaylists } = usePlaylistStore()
   const navigate = useNavigate()
 
   useEffect(() => {
-    subsonic.getPlaylists().then(setPlaylists).catch(() => setPlaylists([]))
-  }, [])
+    fetchPlaylists()
+  }, [fetchPlaylists])
 
-  const handleCreatePlaylist = async () => {
-    const name = window.prompt('Enter new playlist name:')
-    if (name?.trim()) {
-      try {
-        await subsonic.createPlaylist(null, name.trim())
-        const updated = await subsonic.getPlaylists()
-        setPlaylists(updated)
-      } catch (err) {
-        console.error('Failed to create playlist:', err)
-      }
-    }
+  const handleCreatePlaylist = () => {
+    setIsCreateOpen(true)
   }
 
   const navItems = [
@@ -117,7 +110,7 @@ export default function Sidebar() {
               playlists.map((pl) => (
                 <div
                   key={pl.id}
-                  onClick={() => navigate('/playlists')}
+                  onClick={() => navigate(`/playlists/${pl.id}`)}
                   className="flex items-center justify-between px-2 py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-xs cursor-pointer group"
                 >
                   <span className="truncate">{pl.name}</span>
@@ -139,8 +132,8 @@ export default function Sidebar() {
           title="Open Settings & Profile"
         >
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs flex-shrink-0 group-hover:scale-105 transition-transform shadow-sm">
-              <span className="material-symbols-outlined text-[18px]">person</span>
+            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs flex-shrink-0 group-hover:scale-105 transition-transform shadow-sm leading-none">
+              <span className="material-symbols-outlined text-[18px] leading-none">person</span>
             </div>
             <div className="flex flex-col min-w-0">
               <span className="text-xs font-semibold text-on-surface leading-tight truncate group-hover:text-primary transition-colors">
@@ -154,12 +147,20 @@ export default function Sidebar() {
           <button
             type="button"
             aria-label="Open settings"
-            className="w-7 h-7 rounded-lg text-on-surface-variant group-hover:text-primary flex items-center justify-center transition-colors"
+            className="w-7 h-7 rounded-lg text-on-surface-variant group-hover:text-primary flex items-center justify-center transition-colors leading-none"
           >
-            <span className="material-symbols-outlined text-[18px]">tune</span>
+            <span className="material-symbols-outlined text-[18px] leading-none">settings</span>
           </button>
         </div>
       </div>
+
+      <CreatePlaylistModal
+        isOpen={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
+        onSuccess={(pl) => {
+          if (pl?.id) navigate(`/playlists/${pl.id}`)
+        }}
+      />
     </aside>
   )
 }

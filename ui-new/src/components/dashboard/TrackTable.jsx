@@ -3,6 +3,7 @@ import Artwork from '../common/Artwork'
 import EqualizerBars from './EqualizerBars'
 import AddToPlaylistModal from '../modals/AddToPlaylistModal'
 import { usePlayerStore } from '../../store/usePlayerStore'
+import { showToast } from '../../store/useToastStore'
 
 function formatDuration(sec) {
   if (!sec || isNaN(sec)) return '0:00'
@@ -33,6 +34,7 @@ export default function TrackTable({
       onAddToQueue(track)
     } else {
       addToQueue(track)
+      showToast(`Added "${track.title}" to queue`, 'info', 'queue_music')
     }
   }
 
@@ -167,9 +169,9 @@ export default function TrackTable({
                           e.stopPropagation()
                           handleQueueTrack(track)
                         }}
-                        className="w-7 h-7 rounded-md text-on-surface-variant hover:text-primary hover:bg-surface-container flex items-center justify-center transition-colors"
+                        className="w-7 h-7 rounded-md text-on-surface-variant hover:text-primary hover:bg-surface-container flex items-center justify-center transition-colors leading-none"
                       >
-                        <span className="material-symbols-outlined text-[17px]">queue_music</span>
+                        <span className="material-symbols-outlined text-[17px] leading-none">queue_music</span>
                       </button>
 
                       {/* Add to Playlist */}
@@ -181,9 +183,9 @@ export default function TrackTable({
                           e.stopPropagation()
                           setPlaylistModalTrack(track)
                         }}
-                        className="w-7 h-7 rounded-md text-on-surface-variant hover:text-primary hover:bg-surface-container flex items-center justify-center transition-colors"
+                        className="w-7 h-7 rounded-md text-on-surface-variant hover:text-primary hover:bg-surface-container flex items-center justify-center transition-colors leading-none"
                       >
-                        <span className="material-symbols-outlined text-[17px]">playlist_add</span>
+                        <span className="material-symbols-outlined text-[17px] leading-none">playlist_add</span>
                       </button>
 
                       {/* Edit Tags */}
@@ -195,9 +197,9 @@ export default function TrackTable({
                           e.stopPropagation()
                           onEditTags?.(track)
                         }}
-                        className="w-7 h-7 rounded-md text-on-surface-variant hover:text-primary hover:bg-surface-container flex items-center justify-center transition-colors"
+                        className="w-7 h-7 rounded-md text-on-surface-variant hover:text-primary hover:bg-surface-container flex items-center justify-center transition-colors leading-none"
                       >
-                        <span className="material-symbols-outlined text-[17px]">edit_note</span>
+                        <span className="material-symbols-outlined text-[17px] leading-none">edit_note</span>
                       </button>
 
                       {/* Favorite */}
@@ -209,10 +211,10 @@ export default function TrackTable({
                           e.stopPropagation()
                           onToggleStar?.(track)
                         }}
-                        className="w-7 h-7 rounded-md text-on-surface-variant hover:text-primary hover:bg-surface-container flex items-center justify-center transition-colors"
+                        className="w-7 h-7 rounded-md text-on-surface-variant hover:text-primary hover:bg-surface-container flex items-center justify-center transition-colors leading-none"
                       >
                         <span
-                          className={`material-symbols-outlined text-[17px] ${
+                          className={`material-symbols-outlined text-[17px] leading-none ${
                             track.starred ? 'text-primary' : ''
                           }`}
                         >
@@ -229,9 +231,9 @@ export default function TrackTable({
                           e.stopPropagation()
                           handleDelete(track)
                         }}
-                        className="w-7 h-7 rounded-md text-on-surface-variant hover:text-red-400 hover:bg-red-500/10 flex items-center justify-center transition-colors"
+                        className="w-7 h-7 rounded-md text-on-surface-variant hover:text-red-400 hover:bg-red-500/10 flex items-center justify-center transition-colors leading-none"
                       >
-                        <span className="material-symbols-outlined text-[17px]">delete</span>
+                        <span className="material-symbols-outlined text-[17px] leading-none">delete</span>
                       </button>
                     </div>
                   </td>

@@ -8,6 +8,7 @@ import SearchModal from '../search/SearchModal'
 import UploadModal from '../modals/UploadModal'
 import TagEditorModal from '../modals/TagEditorModal'
 import SettingsModal from '../modals/SettingsModal'
+import ToastContainer from '../common/ToastContainer'
 import { useUIStore } from '../../store/useUIStore'
 import { usePlayerStore } from '../../store/usePlayerStore'
 
@@ -79,6 +80,8 @@ export default function ShellLayout({ children }) {
         isOpen={isSettingsOpen}
         onClose={closeSettings}
       />
+
+      <ToastContainer />
     </div>
   )
 }

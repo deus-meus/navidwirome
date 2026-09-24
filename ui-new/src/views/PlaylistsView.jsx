@@ -1,7 +1,11 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import subsonic from '../api/subsonic'
 import Artwork from '../components/common/Artwork'
+import CreatePlaylistModal from '../components/modals/CreatePlaylistModal'
+import RenamePlaylistModal from '../components/modals/RenamePlaylistModal'
 import { usePlayerStore } from '../store/usePlayerStore'
+import { usePlaylistStore } from '../store/usePlaylistStore'
 
 function formatDuration(seconds) {
   if (!seconds) return '0 min'
@@ -12,44 +16,20 @@ function formatDuration(seconds) {
 }
 
 export default function PlaylistsView() {
-  const [playlists, setPlaylists] = useState([])
   const [searchFilter, setSearchFilter] = useState('')
-  const [loading, setLoading] = useState(true)
+  const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const [renameTarget, setRenameTarget] = useState(null)
 
+  const navigate = useNavigate()
   const { playTrack } = usePlayerStore()
-
-  const loadPlaylists = () => {
-    setLoading(true)
-    subsonic
-      .getPlaylists()
-      .then((data) => {
-        setPlaylists(data || [])
-        setLoading(false)
-      })
-      .catch((err) => {
-        console.error('Failed to load playlists:', err)
-        setPlaylists([])
-        setLoading(false)
-      })
-  }
+  const { playlists, loading, fetchPlaylists, deletePlaylist } = usePlaylistStore()
 
   useEffect(() => {
-    loadPlaylists()
-  }, [])
+    fetchPlaylists()
+  }, [fetchPlaylists])
 
-  const handleCreatePlaylist = async () => {
-    const name = window.prompt('Enter new playlist name:')
-    if (name?.trim()) {
-      try {
-        await subsonic.createPlaylist(null, name.trim())
-        loadPlaylists()
-      } catch (err) {
-        console.error('Failed to create playlist:', err)
-      }
-    }
-  }
-
-  const handlePlayPlaylist = async (pl) => {
+  const handlePlayPlaylist = async (pl, e) => {
+    e?.stopPropagation()
     try {
       const data = await subsonic.getPlaylist(pl.id)
       const songs = data?.entry || []
@@ -61,13 +41,30 @@ export default function PlaylistsView() {
     }
   }
 
+  const handleDeletePlaylist = async (pl, e) => {
+    e?.stopPropagation()
+    if (
+      !window.confirm(
+        `Are you sure you want to delete playlist "${pl.name}"? This cannot be undone.`
+      )
+    ) {
+      return
+    }
+    await deletePlaylist(pl.id, pl.name)
+  }
+
+  const handleRenamePlaylist = (pl, e) => {
+    e?.stopPropagation()
+    setRenameTarget(pl)
+  }
+
   const filtered = playlists.filter((pl) => {
     if (!searchFilter.trim()) return true
-    return pl.name.toLowerCase().includes(searchFilter.toLowerCase())
+    return pl.name?.toLowerCase().includes(searchFilter.toLowerCase())
   })
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 select-none">
       {/* Header, Search Filter, and Create Button */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-outline-variant">
         <div>
@@ -81,7 +78,7 @@ export default function PlaylistsView() {
 
         <div className="flex items-center gap-3">
           <div className="w-full md:w-64 relative">
-            <span className="material-symbols-outlined absolute left-2.5 top-2.5 text-on-surface-variant text-[18px]">
+            <span className="material-symbols-outlined absolute left-2.5 top-2 text-on-surface-variant text-[18px] leading-none pointer-events-none">
               search
             </span>
             <input
@@ -89,23 +86,23 @@ export default function PlaylistsView() {
               value={searchFilter}
               onChange={(e) => setSearchFilter(e.target.value)}
               placeholder="Filter playlists..."
-              className="w-full h-9 pl-8 pr-3 bg-surface-container-low border border-outline-variant rounded-lg text-xs text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:border-primary"
+              className="w-full h-9 pl-8 pr-3 bg-surface-container-low border border-outline-variant rounded-xl text-xs text-on-surface placeholder:text-on-surface-variant/60 focus:outline-none focus:border-primary transition-colors"
             />
           </div>
 
           <button
             type="button"
             aria-label="Create Playlist"
-            onClick={handleCreatePlaylist}
-            className="flex items-center gap-1.5 px-3.5 h-9 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-primary-bright transition-all shadow-sm flex-shrink-0 cursor-pointer"
+            onClick={() => setIsCreateOpen(true)}
+            className="flex items-center gap-1.5 px-3.5 h-9 rounded-xl bg-primary text-white text-xs font-semibold hover:bg-primary-bright transition-all shadow-md flex-shrink-0 cursor-pointer leading-none"
           >
-            <span className="material-symbols-outlined text-[18px]">add</span>
+            <span className="material-symbols-outlined text-[18px] leading-none">add</span>
             <span>Create Playlist</span>
           </button>
         </div>
       </div>
 
-      {loading ? (
+      {loading && playlists.length === 0 ? (
         <div className="py-20 flex items-center justify-center text-primary">
           <span className="material-symbols-outlined text-4xl animate-spin">progress_activity</span>
         </div>
@@ -125,10 +122,10 @@ export default function PlaylistsView() {
           <button
             type="button"
             aria-label="Create Playlist"
-            onClick={handleCreatePlaylist}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-white text-xs font-semibold hover:bg-primary-bright transition-all shadow-lg cursor-pointer hover:scale-105"
+            onClick={() => setIsCreateOpen(true)}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-white text-xs font-semibold hover:bg-primary-bright transition-all shadow-lg cursor-pointer hover:scale-105 leading-none"
           >
-            <span className="material-symbols-outlined text-[18px]">add</span>
+            <span className="material-symbols-outlined text-[18px] leading-none">add</span>
             <span>Create First Playlist</span>
           </button>
         </div>
@@ -137,33 +134,55 @@ export default function PlaylistsView() {
           {filtered.map((pl) => (
             <div
               key={pl.id}
-              onClick={() => handlePlayPlaylist(pl)}
-              className="group flex flex-col gap-2 p-2 rounded-xl bg-surface-container-low border border-outline-variant hover:bg-surface-container hover:border-primary/30 transition-all cursor-pointer"
+              onClick={() => navigate(`/playlists/${pl.id}`)}
+              className="group relative flex flex-col gap-2 p-2.5 rounded-2xl bg-surface-container-low border border-outline-variant hover:bg-surface-container hover:border-primary/40 transition-all cursor-pointer shadow-sm hover:shadow-lg"
             >
-              <div className="relative aspect-square w-full rounded-lg overflow-hidden bg-surface-container-high shadow-md">
+              <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-surface-container-high shadow-md">
                 <Artwork
                   record={{ ...pl, sync: true }}
                   size={300}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
+
+                {/* Overlay Action Buttons on Hover */}
+                <div className="absolute top-2 right-2 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    type="button"
+                    title="Rename playlist"
+                    aria-label={`Rename ${pl.name}`}
+                    onClick={(e) => handleRenamePlaylist(pl, e)}
+                    className="w-7 h-7 rounded-lg bg-black/60 backdrop-blur-md border border-white/10 text-white hover:text-primary hover:bg-black/80 flex items-center justify-center transition-all cursor-pointer leading-none"
+                  >
+                    <span className="material-symbols-outlined text-[15px] leading-none">edit</span>
+                  </button>
+                  <button
+                    type="button"
+                    title="Delete playlist"
+                    aria-label={`Delete ${pl.name}`}
+                    onClick={(e) => handleDeletePlaylist(pl, e)}
+                    className="w-7 h-7 rounded-lg bg-black/60 backdrop-blur-md border border-white/10 text-white hover:text-red-400 hover:bg-black/80 flex items-center justify-center transition-all cursor-pointer leading-none"
+                  >
+                    <span className="material-symbols-outlined text-[15px] leading-none">delete</span>
+                  </button>
+                </div>
+
+                {/* Play Button */}
                 <button
                   type="button"
+                  title="Play playlist"
                   aria-label={`Play ${pl.name}`}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handlePlayPlaylist(pl)
-                  }}
-                  className="absolute bottom-2 right-2 w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-xl hover:scale-105 cursor-pointer"
+                  onClick={(e) => handlePlayPlaylist(pl, e)}
+                  className="absolute bottom-2.5 right-2.5 w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-xl hover:scale-105 cursor-pointer leading-none"
                 >
-                  <span className="material-symbols-outlined text-[22px]">play_arrow</span>
+                  <span className="material-symbols-outlined text-[22px] leading-none">play_arrow</span>
                 </button>
               </div>
 
-              <div className="space-y-0.5 pt-1">
-                <h3 className="font-body-md text-sm font-semibold text-on-surface truncate group-hover:text-primary transition-colors">
+              <div className="space-y-0.5 pt-1 px-1">
+                <h3 className="font-body-md text-xs font-semibold text-on-surface truncate group-hover:text-primary transition-colors">
                   {pl.name}
                 </h3>
-                <div className="flex items-center gap-1.5 font-mono text-[11px] text-on-surface-variant/60 pt-0.5">
+                <div className="flex items-center gap-1.5 font-mono text-[10px] text-on-surface-variant/70 pt-0.5">
                   <span>{pl.songCount || 0} tracks</span>
                   <span>•</span>
                   <span>{formatDuration(pl.duration)}</span>
@@ -173,6 +192,20 @@ export default function PlaylistsView() {
           ))}
         </div>
       )}
+
+      <CreatePlaylistModal
+        isOpen={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
+        onSuccess={(newPl) => {
+          if (newPl?.id) navigate(`/playlists/${newPl.id}`)
+        }}
+      />
+
+      <RenamePlaylistModal
+        isOpen={Boolean(renameTarget)}
+        playlist={renameTarget}
+        onClose={() => setRenameTarget(null)}
+      />
     </div>
   )
 }

@@ -11,6 +11,7 @@ import ArtistsView from './views/ArtistsView'
 import ArtistDetailView from './views/ArtistDetailView'
 import SongsView from './views/SongsView'
 import PlaylistsView from './views/PlaylistsView'
+import PlaylistDetailView from './views/PlaylistDetailView'
 
 export default function App() {
   const { isAuthenticated, isLoading, checkAuth } = useAuthStore()
@@ -64,6 +65,7 @@ export default function App() {
           <Route path="/artists/:id" element={<ArtistDetailView />} />
           <Route path="/songs" element={<SongsView />} />
           <Route path="/playlists" element={<PlaylistsView />} />
+          <Route path="/playlists/:id" element={<PlaylistDetailView />} />
           <Route
             path="*"
             element={

@@ -95,6 +95,24 @@ export const usePlayerStore = create((set, get) => {
       }))
     },
 
+    removeFromQueue: (index) =>
+      set((state) => {
+        const newQueue = state.queue.filter((_, i) => i !== index)
+        let newIndex = state.queueIndex
+        if (index < state.queueIndex) {
+          newIndex = Math.max(0, state.queueIndex - 1)
+        } else if (newIndex >= newQueue.length) {
+          newIndex = Math.max(0, newQueue.length - 1)
+        }
+        return { queue: newQueue, queueIndex: newIndex }
+      }),
+
+    clearQueue: () =>
+      set((state) => ({
+        queue: state.currentTrack ? [state.currentTrack] : [],
+        queueIndex: state.currentTrack ? 0 : -1,
+      })),
+
     playPrev: async () => {
       const { queue, queueIndex, currentTime } = get()
       if (currentTime > 3) {

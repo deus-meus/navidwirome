@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import subsonic from '../../api/subsonic'
+import { usePlaylistStore } from '../../store/usePlaylistStore'
+import { showToast } from '../../store/useToastStore'
 
 export default function AddToPlaylistModal({ isOpen, track, onClose }) {
   const [playlists, setPlaylists] = useState([])
@@ -43,6 +45,8 @@ export default function AddToPlaylistModal({ isOpen, track, onClose }) {
     setError(null)
     try {
       await subsonic.addToPlaylist(playlist.id, track.id)
+      await usePlaylistStore.getState().fetchPlaylists()
+      showToast(`Added "${track.title}" to ${playlist.name}`, 'success', 'playlist_add')
       setSubmitting(false)
       onClose()
     } catch (err) {
@@ -59,6 +63,8 @@ export default function AddToPlaylistModal({ isOpen, track, onClose }) {
     setError(null)
     try {
       await subsonic.createPlaylist(null, newPlaylistName.trim(), [track.id])
+      await usePlaylistStore.getState().fetchPlaylists()
+      showToast(`Created "${newPlaylistName.trim()}" and added "${track.title}"`, 'success', 'playlist_add')
       setSubmitting(false)
       onClose()
     } catch (err) {
@@ -69,7 +75,7 @@ export default function AddToPlaylistModal({ isOpen, track, onClose }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in select-none"
       onClick={onClose}
     >
       <div
@@ -79,8 +85,8 @@ export default function AddToPlaylistModal({ isOpen, track, onClose }) {
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-outline-variant">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center text-primary">
-              <span className="material-symbols-outlined text-[20px]">playlist_add</span>
+            <div className="w-8 h-8 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center text-primary leading-none">
+              <span className="material-symbols-outlined text-[20px] leading-none">playlist_add</span>
             </div>
             <div>
               <h3 className="font-headline-sm text-base font-semibold text-on-surface">
@@ -95,9 +101,9 @@ export default function AddToPlaylistModal({ isOpen, track, onClose }) {
             type="button"
             aria-label="Close"
             onClick={onClose}
-            className="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-colors cursor-pointer"
+            className="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-colors cursor-pointer leading-none"
           >
-            <span className="material-symbols-outlined text-[18px]">close</span>
+            <span className="material-symbols-outlined text-[18px] leading-none">close</span>
           </button>
         </div>
 

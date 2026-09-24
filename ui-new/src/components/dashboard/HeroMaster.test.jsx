@@ -11,14 +11,15 @@ describe('HeroMaster', () => {
     genre: 'Minimal Techno',
   }
 
-  it('renders album information, format badge, and audio spectrum', () => {
+  it('renders album information, format badge, and transport controls', () => {
     render(<HeroMaster album={mockAlbum} />)
 
     expect(screen.getByText('Master Feature')).toBeInTheDocument()
     expect(screen.getByText('Flown')).toBeInTheDocument()
     expect(screen.getAllByText(/Kiasmos/).length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText(/24-bit \/ 96kHz Lossless/i)).toBeInTheDocument()
-    expect(screen.getByText('Spectrum Density')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /play master/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /add to queue/i })).toBeInTheDocument()
     expect(screen.getByText(/DR16/i)).toBeInTheDocument()
   })
 

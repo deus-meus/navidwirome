@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { usePlayerStore } from '../../store/usePlayerStore'
-import { useUIStore } from '../../store/useUIStore'
+import { showToast } from '../../store/useToastStore'
 import Artwork from '../common/Artwork'
 import Scrubber from '../common/Scrubber'
 import subsonic from '../../api/subsonic'
@@ -31,16 +31,16 @@ export default function PlayerBar() {
     toggleRepeat,
   } = usePlayerStore()
 
-  const { isRightPanelOpen, toggleRightPanel } = useUIStore()
-
   const handleToggleStarCurrent = async () => {
     if (!currentTrack?.id) return
     const newStarred = !currentTrack.starred
     try {
       if (newStarred) {
         await subsonic.star(currentTrack.id)
+        showToast(`Added "${currentTrack.title}" to Favorites`, 'success', 'favorite')
       } else {
         await subsonic.unstar(currentTrack.id)
+        showToast(`Removed "${currentTrack.title}" from Favorites`, 'info', 'favorite_border')
       }
       usePlayerStore.setState((state) => ({
         currentTrack: state.currentTrack ? { ...state.currentTrack, starred: newStarred } : null,
@@ -159,43 +159,24 @@ export default function PlayerBar() {
         </div>
       </div>
 
-      {/* Right: Favorite (Love) + Bitrate + Volume + Studio Monitor Drawer */}
-      <div className="flex items-center justify-end gap-2.5 w-1/4 min-w-[220px]">
-        {/* Favorite Love Button relocated to right */}
-        {currentTrack && (
-          <button
-            type="button"
-            aria-label="Favorite current track"
-            title={currentTrack.starred ? 'Favorited' : 'Add to favorites'}
-            onClick={handleToggleStarCurrent}
-            className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer hover:bg-surface-container ${
-              currentTrack.starred
-                ? 'text-primary'
-                : 'text-on-surface-variant hover:text-primary'
-            }`}
-          >
-            <span className="material-symbols-outlined text-[19px]">
-              {currentTrack.starred ? 'favorite' : 'favorite'}
-            </span>
-          </button>
-        )}
-
+      {/* Right: Bitrate + Volume + Favorite (Love) at Far Right */}
+      <div className="flex items-center justify-end gap-3 w-1/4 min-w-[220px]">
         {/* Bitrate Badge */}
         {currentTrack?.bitRate && (
-          <span className="px-1.5 py-0.5 rounded border border-outline-variant font-mono text-[9px] text-primary flex items-center">
+          <span className="px-2 py-0.5 rounded border border-outline-variant font-mono text-[10px] text-primary flex items-center leading-none h-6">
             {currentTrack.bitRate}k
           </span>
         )}
 
         {/* Volume Controls */}
-        <div className="flex items-center gap-1.5 w-28">
+        <div className="flex items-center gap-2 w-28">
           <button
             type="button"
             aria-label="Toggle mute"
             onClick={handleToggleMute}
-            className="w-7 h-7 rounded-full flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors cursor-pointer"
+            className="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors cursor-pointer leading-none"
           >
-            <span className="material-symbols-outlined text-[18px]">
+            <span className="material-symbols-outlined text-[19px] leading-none">
               {volume === 0 ? 'volume_off' : volume < 0.5 ? 'volume_down' : 'volume_up'}
             </span>
           </button>
@@ -204,18 +185,24 @@ export default function PlayerBar() {
           </div>
         </div>
 
-        {/* Right Panel Studio Monitor Toggle */}
-        <button
-          type="button"
-          aria-label="Toggle Now Playing panel"
-          onClick={toggleRightPanel}
-          className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer hover:bg-surface-container ${
-            isRightPanelOpen ? 'text-primary' : 'text-on-surface-variant hover:text-on-surface'
-          }`}
-          title="Toggle Studio Monitor & Lyrics"
-        >
-          <span className="material-symbols-outlined text-[20px]">queue_music</span>
-        </button>
+        {/* Favorite Love Button - Relocated to Far Right */}
+        {currentTrack && (
+          <button
+            type="button"
+            aria-label="Favorite current track"
+            title={currentTrack.starred ? 'Favorited' : 'Add to favorites'}
+            onClick={handleToggleStarCurrent}
+            className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer hover:bg-surface-container leading-none ${
+              currentTrack.starred
+                ? 'text-primary'
+                : 'text-on-surface-variant hover:text-primary'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[20px] leading-none">
+              {currentTrack.starred ? 'favorite' : 'favorite'}
+            </span>
+          </button>
+        )}
       </div>
     </footer>
   )

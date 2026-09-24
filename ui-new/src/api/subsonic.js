@@ -143,6 +143,24 @@ class SubsonicClient {
     return res?.playlist || null
   }
 
+  async deletePlaylist(id) {
+    const res = await this.request('deletePlaylist', { id })
+    return res?.status === 'ok'
+  }
+
+  async updatePlaylistName(id, name) {
+    const res = await this.request('updatePlaylist', { playlistId: id, name })
+    return res?.status === 'ok'
+  }
+
+  async removeSongFromPlaylist(playlistId, songIndexToRemove) {
+    const res = await this.request('updatePlaylist', {
+      playlistId,
+      songIndexToRemove,
+    })
+    return res?.status === 'ok'
+  }
+
   async getAlbumList2(type = 'recent', size = 20) {
     const res = await this.request('getAlbumList2', { type, size })
     return res?.albumList2?.album || []

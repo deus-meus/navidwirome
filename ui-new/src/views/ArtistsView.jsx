@@ -109,11 +109,11 @@ export default function ArtistsView() {
           {filteredIndexes.map((group) => (
             <div key={group.name} id={`section-${group.name}`} className="space-y-3 pt-2">
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-surface-container border border-outline-variant shadow-sm">
-                  <span className="font-mono text-[11px] uppercase tracking-wider text-on-surface-variant font-medium">
+                <div className="inline-flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg bg-surface-container border border-outline-variant shadow-sm leading-none">
+                  <span className="font-mono text-xs uppercase text-on-surface-variant font-semibold leading-none">
                     Index
                   </span>
-                  <span className="font-mono text-base font-bold text-primary">
+                  <span className="font-mono text-xs font-bold text-primary leading-none">
                     {group.name}
                   </span>
                 </div>

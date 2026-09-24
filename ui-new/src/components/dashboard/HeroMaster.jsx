@@ -61,43 +61,25 @@ export default function HeroMaster({
             {description}
           </p>
 
-          {/* Interactive Controls & Spectrum Density Bar */}
-          <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-2">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => onPlayMaster?.(album)}
-                className="px-6 py-2.5 rounded-full bg-primary text-white font-label-md text-sm font-bold hover:bg-primary-bright transition-all shadow-xl hover:scale-105 flex items-center gap-2 cursor-pointer"
-                type="button"
-              >
-                <span className="material-symbols-outlined text-[20px] text-white">play_arrow</span>
-                <span>Play Master</span>
-              </button>
+          {/* Interactive Controls */}
+          <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 pt-2">
+            <button
+              onClick={() => onPlayMaster?.(album)}
+              className="px-6 py-2.5 rounded-full bg-primary text-white font-label-md text-sm font-bold hover:bg-primary-bright transition-all shadow-xl hover:scale-105 flex items-center gap-2 cursor-pointer whitespace-nowrap flex-shrink-0 leading-none"
+              type="button"
+            >
+              <span className="material-symbols-outlined text-[20px] text-white leading-none">play_arrow</span>
+              <span>Play Master</span>
+            </button>
 
-              <button
-                onClick={() => (onAddToQueue ? onAddToQueue(album) : onAddToLibrary?.(album))}
-                className="px-5 py-2.5 rounded-full bg-surface-container-high border border-outline-variant text-on-surface hover:bg-surface-container-highest hover:text-primary font-label-md text-sm font-medium transition-all flex items-center gap-2 cursor-pointer shadow-sm"
-                type="button"
-              >
-                <span className="material-symbols-outlined text-[19px]">queue_music</span>
-                <span>Add to Queue</span>
-              </button>
-            </div>
-
-            {/* Compact Spectrum Density Sparkline */}
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface-container-lowest/80 border border-outline-variant">
-              <span className="font-mono text-[10px] text-on-surface-variant uppercase tracking-wider">
-                Spectrum Density
-              </span>
-              <svg className="w-20 h-6 text-primary" fill="none" viewBox="0 0 100 30">
-                <path
-                  d="M0 24 L10 20 L20 26 L30 12 L40 18 L50 6 L60 14 L70 4 L80 16 L90 8 L100 12"
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                />
-              </svg>
-            </div>
+            <button
+              onClick={() => (onAddToQueue ? onAddToQueue(album) : onAddToLibrary?.(album))}
+              className="px-5 py-2.5 rounded-full bg-surface-container-high border border-outline-variant text-on-surface hover:bg-surface-container-highest hover:text-primary font-label-md text-sm font-medium transition-all flex items-center gap-2 cursor-pointer shadow-sm whitespace-nowrap flex-shrink-0 leading-none"
+              type="button"
+            >
+              <span className="material-symbols-outlined text-[19px] leading-none">queue_music</span>
+              <span>Add to Queue</span>
+            </button>
           </div>
         </div>
 
