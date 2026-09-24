@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from './store/useAuthStore'
 import LoginView from './components/auth/LoginView'
 import ShellLayout from './components/shell/ShellLayout'
@@ -31,7 +31,7 @@ export default function App() {
   }
 
   return (
-    <BrowserRouter>
+    <HashRouter>
       <ShellLayout>
         <Routes>
           <Route path="/" element={<DiscoverView />} />
@@ -52,6 +52,6 @@ export default function App() {
           />
         </Routes>
       </ShellLayout>
-    </BrowserRouter>
+    </HashRouter>
   )
 }
