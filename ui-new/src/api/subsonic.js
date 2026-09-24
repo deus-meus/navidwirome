@@ -120,6 +120,60 @@ class SubsonicClient {
     const res = await this.request('getAlbumList2', { type, size })
     return res?.albumList2?.album || []
   }
+
+  async getRandomSongs(size = 20) {
+    const res = await this.request('getRandomSongs', { size })
+    return res?.randomSongs?.song || []
+  }
+
+  async getAlbum(id) {
+    const res = await this.request('getAlbum', { id })
+    return res?.album || null
+  }
+
+  async getArtist(id) {
+    const res = await this.request('getArtist', { id })
+    return res?.artist || null
+  }
+
+  async getArtists() {
+    const res = await this.request('getArtists')
+    return res?.artists?.index || []
+  }
+
+  async star(id) {
+    const res = await this.request('star', { id })
+    return res?.status === 'ok'
+  }
+
+  async unstar(id) {
+    const res = await this.request('unstar', { id })
+    return res?.status === 'ok'
+  }
+
+  async search3(query, artistCount = 10, albumCount = 10, songCount = 20) {
+    if (!query?.trim()) return { artists: [], albums: [], songs: [] }
+    const res = await this.request('search3', {
+      query,
+      artistCount,
+      albumCount,
+      songCount,
+    })
+    return {
+      artists: res?.searchResult3?.artist || [],
+      albums: res?.searchResult3?.album || [],
+      songs: res?.searchResult3?.song || [],
+    }
+  }
+
+  async getLyrics(id) {
+    try {
+      const res = await this.request('getLyricsBySongId', { id })
+      return res?.lyricsList?.structuredLyrics?.[0] || null
+    } catch {
+      return null
+    }
+  }
 }
 
 const subsonic = new SubsonicClient()

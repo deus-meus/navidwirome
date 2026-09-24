@@ -46,4 +46,44 @@ describe('subsonic API client', () => {
     const isAlive = await subsonic.ping()
     expect(isAlive).toBe(false)
   })
+
+  it('fetches random songs, album details, and handles starring', async () => {
+    subsonic.setCredentials('alice', 'testtoken123', 'randomsalt456')
+
+    // Test getRandomSongs
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        'subsonic-response': {
+          status: 'ok',
+          randomSongs: { song: [{ id: 's1', title: 'Song One' }] },
+        },
+      }),
+    })
+    const songs = await subsonic.getRandomSongs(10)
+    expect(songs).toHaveLength(1)
+    expect(songs[0].title).toBe('Song One')
+
+    // Test getAlbum
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        'subsonic-response': {
+          status: 'ok',
+          album: { id: 'alb1', name: 'Album One', song: [{ id: 's1' }] },
+        },
+      }),
+    })
+    const album = await subsonic.getAlbum('alb1')
+    expect(album.name).toBe('Album One')
+    expect(album.song).toHaveLength(1)
+
+    // Test star & unstar
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ 'subsonic-response': { status: 'ok' } }),
+    })
+    const starRes = await subsonic.star('s1')
+    expect(starRes).toBe(true)
+  })
 })

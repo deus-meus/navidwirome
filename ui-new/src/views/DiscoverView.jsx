@@ -2,24 +2,77 @@ import { useEffect, useState } from 'react'
 import subsonic from '../api/subsonic'
 import { usePlayerStore } from '../store/usePlayerStore'
 import Artwork from '../components/common/Artwork'
+import HeroMaster from '../components/dashboard/HeroMaster'
+import AlbumGrid from '../components/dashboard/AlbumGrid'
+import TrackTable from '../components/dashboard/TrackTable'
 
 export default function DiscoverView() {
   const [albums, setAlbums] = useState([])
+  const [tracks, setTracks] = useState([])
   const [loading, setLoading] = useState(true)
-  const { playTrack } = usePlayerStore()
+
+  const { currentTrack, isPlaying, playTrack } = usePlayerStore()
 
   useEffect(() => {
-    subsonic
-      .getAlbumList2('recent', 8)
-      .then((data) => {
-        setAlbums(data || [])
+    let isMounted = true
+
+    Promise.all([
+      subsonic.getAlbumList2('recent', 12).catch(() => []),
+      subsonic.getRandomSongs(10).catch(() => []),
+    ])
+      .then(([albumList, songList]) => {
+        if (!isMounted) return
+        setAlbums(albumList || [])
+        setTracks(songList || [])
         setLoading(false)
       })
       .catch(() => {
+        if (!isMounted) return
         setAlbums([])
+        setTracks([])
         setLoading(false)
       })
+
+    return () => {
+      isMounted = false
+    }
   }, [])
+
+  const handlePlayMaster = async (album) => {
+    if (!album) return
+    try {
+      const albumData = await subsonic.getAlbum(album.id)
+      const albumSongs = albumData?.song || []
+      if (albumSongs.length > 0) {
+        playTrack(albumSongs[0], albumSongs)
+      } else {
+        playTrack({ id: album.id, title: album.name || album.title, artist: album.artist })
+      }
+    } catch {
+      playTrack({ id: album.id, title: album.name || album.title, artist: album.artist })
+    }
+  }
+
+  const handleToggleStar = async (track) => {
+    if (!track?.id) return
+    const newStarred = !track.starred
+    try {
+      if (newStarred) {
+        await subsonic.star(track.id)
+      } else {
+        await subsonic.unstar(track.id)
+      }
+      setTracks((prev) =>
+        prev.map((t) => (t.id === track.id ? { ...t, starred: newStarred } : t))
+      )
+    } catch (err) {
+      console.error('Failed to toggle star:', err)
+    }
+  }
+
+  const heroAlbum = albums.length > 0 ? albums[0] : null
+  const quickAccessAlbums = albums.slice(0, 8)
+  const recentAcquisitions = albums.length > 1 ? albums.slice(1, 11) : albums
 
   return (
     <div className="space-y-8">
@@ -54,7 +107,7 @@ export default function DiscoverView() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {albums.map((album) => (
+            {quickAccessAlbums.map((album) => (
               <div
                 key={album.id}
                 onClick={() => playTrack({ id: album.id, title: album.name, artist: album.artist })}
@@ -82,6 +135,29 @@ export default function DiscoverView() {
           </div>
         )}
       </div>
+
+      {/* Featured Master Spotlight Hero */}
+      <HeroMaster
+        album={heroAlbum}
+        onPlayMaster={handlePlayMaster}
+      />
+
+      {/* Recent Albums & Acquisitions Grid (5 Columns) */}
+      <AlbumGrid
+        albums={recentAcquisitions}
+        title="Recent Albums & Acquisitions"
+        subtitle="Hi-Res catalog synchronizations from personal storage"
+        onPlayAlbum={handlePlayMaster}
+      />
+
+      {/* Audio Stream Queue & Master Tracks Table */}
+      <TrackTable
+        tracks={tracks}
+        currentTrack={currentTrack}
+        isPlaying={isPlaying}
+        onPlayTrack={(track, queue) => playTrack(track, queue)}
+        onToggleStar={handleToggleStar}
+      />
     </div>
   )
 }
