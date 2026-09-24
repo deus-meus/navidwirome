@@ -7,6 +7,7 @@ import RightPanel from './RightPanel'
 import SearchModal from '../search/SearchModal'
 import UploadModal from '../modals/UploadModal'
 import TagEditorModal from '../modals/TagEditorModal'
+import SettingsModal from '../modals/SettingsModal'
 import { useUIStore } from '../../store/useUIStore'
 import { usePlayerStore } from '../../store/usePlayerStore'
 
@@ -20,6 +21,8 @@ export default function ShellLayout({ children }) {
     closeUpload,
     tagEditorTrack,
     closeTagEditor,
+    isSettingsOpen,
+    closeSettings,
   } = useUIStore()
   const { playTrack } = usePlayerStore()
   const navigate = useNavigate()
@@ -70,6 +73,11 @@ export default function ShellLayout({ children }) {
         onSaveTags={() => {
           closeTagEditor()
         }}
+      />
+
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={closeSettings}
       />
     </div>
   )

@@ -17,9 +17,15 @@ describe('ArtistDetailView', () => {
   beforeEach(() => {
     vi.restoreAllMocks()
     vi.spyOn(subsonic, 'getArtist').mockResolvedValue(mockArtist)
+    vi.spyOn(subsonic, 'getArtistInfo').mockResolvedValue({
+      biography: 'Radiohead are an English rock band formed in Abingdon, Oxfordshire, in 1985.',
+      largeImageUrl: 'http://example.com/radiohead.jpg',
+      lastFmUrl: 'https://last.fm/music/Radiohead',
+      similarArtist: [{ id: 'sim-1', name: 'Thom Yorke' }],
+    })
   })
 
-  it('renders artist profile and discography albums', async () => {
+  it('renders artist profile, biography, and discography albums', async () => {
     render(
       <MemoryRouter initialEntries={['/artists/art-1']}>
         <Routes>
@@ -30,6 +36,8 @@ describe('ArtistDetailView', () => {
 
     await waitFor(() => {
       expect(screen.getAllByText('Radiohead').length).toBeGreaterThanOrEqual(1)
+      expect(screen.getByText(/English rock band/i)).toBeInTheDocument()
+      expect(screen.getByText('Thom Yorke')).toBeInTheDocument()
       expect(screen.getByText('Kid A')).toBeInTheDocument()
       expect(screen.getByText('In Rainbows')).toBeInTheDocument()
     })

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import subsonic from '../api/subsonic'
 import Artwork from '../components/common/Artwork'
 import TrackTable from '../components/dashboard/TrackTable'
@@ -16,6 +16,7 @@ export default function AlbumDetailView() {
   const [album, setAlbum] = useState(null)
   const [loading, setLoading] = useState(true)
 
+  const navigate = useNavigate()
   const { currentTrack, isPlaying, playTrack } = usePlayerStore()
 
   useEffect(() => {
@@ -60,6 +61,25 @@ export default function AlbumDetailView() {
     if (songs.length > 0) {
       const shuffled = [...songs].sort(() => Math.random() - 0.5)
       playTrack(shuffled[0], shuffled)
+    }
+  }
+
+  const handleDeleteAlbum = async () => {
+    if (
+      !window.confirm(
+        `Are you sure you want to permanently delete album "${album.name}" and all its audio files? This cannot be undone.`
+      )
+    ) {
+      return
+    }
+    try {
+      const res = await fetch(`/api/music/album/${album.id}`, { method: 'DELETE' })
+      if (!res.ok) {
+        throw new Error('Failed to delete album')
+      }
+      navigate('/albums')
+    } catch (err) {
+      alert(`Error deleting album: ${err.message}`)
     }
   }
 
@@ -131,22 +151,33 @@ export default function AlbumDetailView() {
           </div>
 
           {/* Action Transport Buttons */}
-          <div className="flex items-center justify-center md:justify-start gap-3 pt-2">
+          <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 pt-2">
             <button
               type="button"
+              aria-label="Play All"
               onClick={handlePlayAll}
-              className="px-6 py-2 rounded-full bg-primary text-white font-label-md text-sm font-bold hover:bg-primary-bright transition-all shadow-lg flex items-center gap-2"
+              className="px-6 py-2 rounded-full bg-primary text-white font-label-md text-sm font-bold hover:bg-primary-bright transition-all shadow-lg flex items-center gap-2 cursor-pointer"
             >
               <span className="material-symbols-outlined text-[20px] text-white">play_arrow</span>
               <span>Play All</span>
             </button>
             <button
               type="button"
+              aria-label="Shuffle"
               onClick={handleShuffle}
-              className="px-4 py-2 rounded-full bg-surface-container-high border border-outline-variant text-on-surface hover:bg-surface-container-highest font-label-md text-sm font-medium transition-all flex items-center gap-2"
+              className="px-4 py-2 rounded-full bg-surface-container-high border border-outline-variant text-on-surface hover:bg-surface-container-highest font-label-md text-sm font-medium transition-all flex items-center gap-2 cursor-pointer"
             >
               <span className="material-symbols-outlined text-[18px]">shuffle</span>
               <span>Shuffle</span>
+            </button>
+            <button
+              type="button"
+              aria-label="Delete Album"
+              onClick={handleDeleteAlbum}
+              className="px-4 py-2 rounded-full bg-surface-container-high border border-outline-variant text-on-surface hover:text-red-400 hover:border-red-500/30 hover:bg-red-500/10 font-label-md text-sm font-medium transition-all flex items-center gap-2 cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-[18px]">delete</span>
+              <span>Delete Album</span>
             </button>
           </div>
         </div>

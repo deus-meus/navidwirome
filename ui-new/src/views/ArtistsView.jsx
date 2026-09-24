@@ -34,6 +34,16 @@ export default function ArtistsView() {
     })
     .filter((group) => group.artist.length > 0)
 
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
+  const activeLetters = new Set(indexList.map((g) => g.name?.toUpperCase()))
+
+  const scrollToLetter = (letter) => {
+    const el = document.getElementById(`section-${letter}`)
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' })
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Header and Filter */}
@@ -43,7 +53,7 @@ export default function ArtistsView() {
             Artists Index
           </h1>
           <p className="font-body-sm text-xs md:text-sm text-on-surface-variant">
-            Explore performers, composers, and creator discographies
+            Alphabetical index of performers, composers, and studio artists
           </p>
         </div>
 
@@ -61,6 +71,31 @@ export default function ArtistsView() {
         </div>
       </div>
 
+      {/* Alphabetical Quick-Jump Bar */}
+      <div className="flex flex-wrap items-center gap-1 p-2 rounded-xl bg-surface-container-low border border-outline-variant">
+        <span className="text-[11px] font-mono text-on-surface-variant/70 uppercase px-2 font-medium">
+          A–Z Jump:
+        </span>
+        {alphabet.map((letter) => {
+          const hasArtists = activeLetters.has(letter)
+          return (
+            <button
+              key={letter}
+              type="button"
+              disabled={!hasArtists}
+              onClick={() => scrollToLetter(letter)}
+              className={`w-6 h-6 rounded-md text-[11px] font-mono font-semibold flex items-center justify-center transition-all ${
+                hasArtists
+                  ? 'text-primary hover:bg-primary/20 hover:scale-110 cursor-pointer'
+                  : 'text-on-surface-variant/30 cursor-not-allowed'
+              }`}
+            >
+              {letter}
+            </button>
+          )
+        })}
+      </div>
+
       {loading ? (
         <div className="py-20 flex items-center justify-center text-primary">
           <span className="material-symbols-outlined text-4xl animate-spin">progress_activity</span>
@@ -72,10 +107,18 @@ export default function ArtistsView() {
       ) : (
         <div className="space-y-8">
           {filteredIndexes.map((group) => (
-            <div key={group.name} className="space-y-3">
+            <div key={group.name} id={`section-${group.name}`} className="space-y-3 pt-2">
               <div className="flex items-center gap-3">
-                <span className="font-headline-sm text-xl font-bold text-primary font-mono w-8">
-                  {group.name}
+                <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-surface-container border border-outline-variant shadow-sm">
+                  <span className="font-mono text-[11px] uppercase tracking-wider text-on-surface-variant font-medium">
+                    Index
+                  </span>
+                  <span className="font-mono text-base font-bold text-primary">
+                    {group.name}
+                  </span>
+                </div>
+                <span className="text-xs font-mono text-on-surface-variant/70">
+                  {group.artist.length} {group.artist.length === 1 ? 'artist' : 'artists'}
                 </span>
                 <div className="h-px flex-1 bg-outline-variant/60" />
               </div>
@@ -87,7 +130,7 @@ export default function ArtistsView() {
                     onClick={() => navigate(`/artists/${artist.id}`)}
                     className="p-3 rounded-xl bg-surface-container-low border border-outline-variant hover:bg-surface-container hover:border-primary/40 transition-all cursor-pointer group flex items-center gap-3"
                   >
-                    <div className="w-10 h-10 rounded-full bg-surface-container-high border border-outline-variant flex items-center justify-center text-primary flex-shrink-0 group-hover:scale-105 transition-transform">
+                    <div className="w-10 h-10 rounded-full bg-surface-container-high border border-outline-variant flex items-center justify-center text-primary flex-shrink-0 group-hover:scale-105 transition-transform shadow-inner">
                       <span className="material-symbols-outlined text-[20px]">person</span>
                     </div>
                     <div className="min-w-0 pr-1">

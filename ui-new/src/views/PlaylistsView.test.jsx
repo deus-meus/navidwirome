@@ -29,4 +29,17 @@ describe('PlaylistsView', () => {
       expect(screen.getByText('Deep Focus & Ambient')).toBeInTheDocument()
     })
   })
+
+  it('renders create playlist button and handles creation', async () => {
+    vi.spyOn(subsonic, 'getPlaylists').mockResolvedValue([])
+    render(
+      <MemoryRouter>
+        <PlaylistsView />
+      </MemoryRouter>
+    )
+
+    await waitFor(() => {
+      expect(screen.getAllByRole('button', { name: /create playlist/i }).length).toBeGreaterThan(0)
+    })
+  })
 })

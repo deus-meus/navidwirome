@@ -8,7 +8,7 @@ import subsonic from '../../api/subsonic'
 
 export default function RightPanel() {
   const { currentTrack, currentTime, isPlaying, seek } = usePlayerStore()
-  const { isRightPanelOpen, toggleRightPanel } = useUIStore()
+  const { isRightPanelOpen } = useUIStore()
   const [lrc, setLrc] = useState('')
 
   useEffect(() => {
@@ -52,14 +52,10 @@ export default function RightPanel() {
             {currentTrack?.suffix ? currentTrack.suffix.toUpperCase() : 'Studio'}
           </span>
         </div>
-        <button
-          type="button"
-          aria-label="Close now playing panel"
-          onClick={toggleRightPanel}
-          className="w-7 h-7 rounded flex items-center justify-center text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors"
-        >
-          <span className="material-symbols-outlined text-[18px]">close</span>
-        </button>
+        <div className="flex items-center gap-1.5 font-mono text-[10px] text-primary">
+          <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+          <span>Live Monitor</span>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">

@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { useUIStore } from '../../store/useUIStore'
 
 export default function Header() {
-  const { activeTab, setActiveTab, isRightPanelOpen } = useUIStore()
+  const { activeTab, setActiveTab, isRightPanelOpen, openUpload } = useUIStore()
   const navigate = useNavigate()
 
   const tabs = [
@@ -10,6 +10,11 @@ export default function Header() {
     { id: 'queue', label: 'Up Next' },
     { id: 'history', label: 'History' },
   ]
+
+  const handleTabClick = (tabId) => {
+    setActiveTab(tabId)
+    navigate('/')
+  }
 
   return (
     <header
@@ -42,10 +47,7 @@ export default function Header() {
             <button
               key={tab.id}
               type="button"
-              onClick={() => {
-                setActiveTab(tab.id)
-                if (tab.id === 'overview') navigate('/')
-              }}
+              onClick={() => handleTabClick(tab.id)}
               className={`px-3 py-1 rounded-lg text-xs transition-colors font-medium cursor-pointer ${
                 activeTab === tab.id
                   ? 'bg-surface-container text-on-surface font-semibold'
@@ -59,6 +61,19 @@ export default function Header() {
       </div>
 
       <div className="flex items-center gap-3">
+        {/* Upload Music Action relocated to Header */}
+        <button
+          type="button"
+          aria-label="Upload Music"
+          onClick={openUpload}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 hover:border-primary/40 text-xs font-semibold transition-all cursor-pointer shadow-sm group"
+        >
+          <span className="material-symbols-outlined text-[17px] group-hover:scale-110 transition-transform">
+            cloud_upload
+          </span>
+          <span>Upload Music</span>
+        </button>
+
         <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-surface-container border border-outline-variant">
           <span className="w-1.5 h-1.5 rounded-full bg-primary" />
           <span className="font-mono text-[10px] text-on-surface font-medium uppercase tracking-wider">

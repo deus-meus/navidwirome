@@ -163,6 +163,34 @@ class SubsonicClient {
     return res?.artist || null
   }
 
+  async getArtistInfo(id) {
+    try {
+      const artistId = id?.startsWith('ar-') ? id : `ar-${id}`
+      const res = await this.request('getArtistInfo', { id: artistId })
+      return res?.artistInfo || null
+    } catch {
+      return null
+    }
+  }
+
+  async startScan() {
+    const res = await this.request('startScan')
+    return res?.scanStatus || { scanning: true }
+  }
+
+  async getScanStatus() {
+    const res = await this.request('getScanStatus')
+    return res?.scanStatus || { scanning: false }
+  }
+
+  async addToPlaylist(playlistId, songId) {
+    const res = await this.request('updatePlaylist', {
+      playlistId,
+      songIdToAdd: songId,
+    })
+    return res?.status === 'ok'
+  }
+
   async getArtists() {
     const res = await this.request('getArtists')
     return res?.artists?.index || []

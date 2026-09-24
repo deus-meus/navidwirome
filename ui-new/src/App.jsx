@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from './store/useAuthStore'
+import { usePlayerStore } from './store/usePlayerStore'
 import LoginView from './components/auth/LoginView'
 import ShellLayout from './components/shell/ShellLayout'
 import DiscoverView from './views/DiscoverView'
@@ -17,6 +18,27 @@ export default function App() {
   useEffect(() => {
     checkAuth()
   }, [checkAuth])
+
+  useEffect(() => {
+    const handleGlobalKeyDown = (e) => {
+      // Spacebar toggles playback unless typing in input/textarea/contentEditable
+      if (e.code === 'Space' || e.key === ' ') {
+        const target = e.target
+        const isInput =
+          target &&
+          (target.tagName === 'INPUT' ||
+            target.tagName === 'TEXTAREA' ||
+            target.isContentEditable ||
+            target.getAttribute?.('role') === 'textbox')
+        if (!isInput) {
+          e.preventDefault()
+          usePlayerStore.getState().togglePlay()
+        }
+      }
+    }
+    window.addEventListener('keydown', handleGlobalKeyDown)
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown)
+  }, [])
 
   if (isLoading) {
     return (

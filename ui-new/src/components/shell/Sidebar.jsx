@@ -7,7 +7,7 @@ import { useUIStore } from '../../store/useUIStore'
 export default function Sidebar() {
   const [playlists, setPlaylists] = useState([])
   const { user } = useAuthStore()
-  const { openSearch, openUpload } = useUIStore()
+  const { openSearch, openSettings } = useUIStore()
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -129,38 +129,35 @@ export default function Sidebar() {
             )}
           </div>
         </div>
-
-        {/* Upload Music Action */}
-        <div className="pt-2 px-1">
-          <button
-            type="button"
-            onClick={openUpload}
-            className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 hover:border-primary/40 text-xs font-semibold transition-all cursor-pointer shadow-sm group"
-          >
-            <span className="material-symbols-outlined text-[18px] group-hover:scale-110 transition-transform">
-              cloud_upload
-            </span>
-            <span>Upload Music</span>
-          </button>
-        </div>
       </div>
 
-      {/* User Status Bar */}
+      {/* User Status Bar & Profile Settings Entry */}
       <div className="p-3 border-t border-outline-variant bg-surface-container-lowest/90">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-white text-xs">
-              <span className="material-symbols-outlined text-[16px]">person</span>
+        <div
+          onClick={openSettings}
+          className="flex items-center justify-between p-1.5 rounded-xl hover:bg-surface-container border border-transparent hover:border-outline-variant/60 transition-all cursor-pointer group"
+          title="Open Settings & Profile"
+        >
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs flex-shrink-0 group-hover:scale-105 transition-transform shadow-sm">
+              <span className="material-symbols-outlined text-[18px]">person</span>
             </div>
-            <div className="flex flex-col">
-              <span className="text-xs font-medium text-on-surface leading-tight">
+            <div className="flex flex-col min-w-0">
+              <span className="text-xs font-semibold text-on-surface leading-tight truncate group-hover:text-primary transition-colors">
                 {user?.username || 'Audiophile'}
               </span>
               <span className="font-mono text-[9px] text-primary flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary inline-block"></span> Lossless Ready
+                <span className="w-1.5 h-1.5 rounded-full bg-primary inline-block" /> Lossless Ready
               </span>
             </div>
           </div>
+          <button
+            type="button"
+            aria-label="Open settings"
+            className="w-7 h-7 rounded-lg text-on-surface-variant group-hover:text-primary flex items-center justify-center transition-colors"
+          >
+            <span className="material-symbols-outlined text-[18px]">tune</span>
+          </button>
         </div>
       </div>
     </aside>

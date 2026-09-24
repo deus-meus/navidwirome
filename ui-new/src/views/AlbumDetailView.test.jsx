@@ -54,6 +54,30 @@ describe('AlbumDetailView', () => {
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /play all/i })).toBeInTheDocument()
       expect(screen.getByRole('button', { name: /shuffle/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /delete album/i })).toBeInTheDocument()
     })
+  })
+
+  it('triggers delete album with confirmation', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    global.fetch = vi.fn().mockResolvedValue({ ok: true })
+
+    render(
+      <MemoryRouter initialEntries={['/albums/alb-101']}>
+        <Routes>
+          <Route path="/albums/:id" element={<AlbumDetailView />} />
+        </Routes>
+      </MemoryRouter>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /delete album/i })).toBeInTheDocument()
+    })
+
+    const deleteBtn = screen.getByRole('button', { name: /delete album/i })
+    deleteBtn.click()
+
+    expect(window.confirm).toHaveBeenCalled()
+    expect(global.fetch).toHaveBeenCalledWith('/api/music/album/alb-101', { method: 'DELETE' })
   })
 })

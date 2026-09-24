@@ -36,4 +36,15 @@ describe('usePlayerStore', () => {
     expect(usePlayerStore.getState().currentTrack?.id).toBe('2')
     expect(usePlayerStore.getState().queueIndex).toBe(1)
   })
+
+  it('adds track to existing queue with addToQueue', () => {
+    const track1 = { id: '1', title: 'Track 1' }
+    const track2 = { id: '2', title: 'Track 2' }
+
+    usePlayerStore.setState({ queue: [track1], queueIndex: 0 })
+    usePlayerStore.getState().addToQueue(track2)
+
+    expect(usePlayerStore.getState().queue).toHaveLength(2)
+    expect(usePlayerStore.getState().queue[1].id).toBe('2')
+  })
 })

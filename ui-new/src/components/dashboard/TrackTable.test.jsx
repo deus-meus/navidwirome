@@ -78,4 +78,26 @@ describe('TrackTable', () => {
     fireEvent.click(editBtns[0])
     expect(handleEdit).toHaveBeenCalledWith(mockTracks[0])
   })
+
+  it('triggers addToQueue when clicking add to queue button', () => {
+    const handleQueue = vi.fn()
+    render(<TrackTable tracks={mockTracks} onAddToQueue={handleQueue} />)
+
+    const queueBtns = screen.getAllByRole('button', { name: /add to queue/i })
+    fireEvent.click(queueBtns[0])
+    expect(handleQueue).toHaveBeenCalledWith(mockTracks[0])
+  })
+
+  it('renders without orange border class on current track row', () => {
+    render(
+      <TrackTable
+        tracks={mockTracks}
+        currentTrack={mockTracks[0]}
+        isPlaying={true}
+      />
+    )
+
+    const row = screen.getByText('Obscure Gesture').closest('tr')
+    expect(row.className).not.toContain('border-primary')
+  })
 })

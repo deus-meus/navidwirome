@@ -17,4 +17,8 @@ export const useUIStore = create((set) => ({
   tagEditorTrack: null,
   openTagEditor: (track) => set({ tagEditorTrack: track }),
   closeTagEditor: () => set({ tagEditorTrack: null }),
+
+  isSettingsOpen: false,
+  openSettings: () => set({ isSettingsOpen: true }),
+  closeSettings: () => set({ isSettingsOpen: false }),
 }))

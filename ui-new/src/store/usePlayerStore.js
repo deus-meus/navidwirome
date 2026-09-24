@@ -87,6 +87,14 @@ export const usePlayerStore = create((set, get) => {
       }
     },
 
+    addToQueue: (track) => {
+      if (!track) return
+      set((state) => ({
+        queue: [...state.queue, track],
+        queueIndex: state.queueIndex === -1 ? 0 : state.queueIndex,
+      }))
+    },
+
     playPrev: async () => {
       const { queue, queueIndex, currentTime } = get()
       if (currentTime > 3) {

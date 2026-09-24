@@ -85,5 +85,39 @@ describe('subsonic API client', () => {
     })
     const starRes = await subsonic.star('s1')
     expect(starRes).toBe(true)
+
+    // Test getArtistInfo
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        'subsonic-response': {
+          status: 'ok',
+          artistInfo: { biography: 'Legendary artist', largeImageUrl: 'http://img.jpg' },
+        },
+      }),
+    })
+    const info = await subsonic.getArtistInfo('art1')
+    expect(info.biography).toBe('Legendary artist')
+
+    // Test startScan & getScanStatus
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        'subsonic-response': {
+          status: 'ok',
+          scanStatus: { scanning: true, count: 120 },
+        },
+      }),
+    })
+    const scan = await subsonic.startScan()
+    expect(scan.scanning).toBe(true)
+
+    // Test addToPlaylist
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ 'subsonic-response': { status: 'ok' } }),
+    })
+    const addRes = await subsonic.addToPlaylist('pl1', 's1')
+    expect(addRes).toBe(true)
   })
 })
