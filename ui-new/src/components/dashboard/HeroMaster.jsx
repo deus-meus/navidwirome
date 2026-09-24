@@ -5,10 +5,14 @@ export default function HeroMaster({
   onPlayMaster,
   onAddToLibrary,
 }) {
-  const title = album?.name || album?.title || 'Flown'
-  const artist = album?.artist || 'Kiasmos'
-  const year = album?.year || 2024
-  const genre = album?.genre || 'Atmospheric Minimal Techno'
+  const title = album?.name || album?.title || 'Master Spotlight'
+  const artist = album?.artist || 'Reference Library'
+  const year = album?.year || new Date().getFullYear()
+  const genre = album?.genre || 'Lossless Studio'
+  const format = album?.suffix ? album.suffix.toUpperCase() : 'FLAC'
+  const description =
+    album?.comment ||
+    `High dynamic range master recording from ${artist}. Pristine audio fidelity with organic acoustic textures and warm harmonics directly from reference library master files.`
 
   return (
     <div className="relative w-full rounded-2xl overflow-hidden bg-surface-container-low border border-outline-variant shadow-xl">
@@ -32,7 +36,7 @@ export default function HeroMaster({
             </span>
             <span className="font-label-sm text-xs text-primary flex items-center gap-1.5 font-medium">
               <span className="w-1.5 h-1.5 rounded-full bg-primary animate-ping" />
-              FLAC 24-bit / 96kHz Lossless
+              {format} 24-bit / 96kHz Lossless
             </span>
           </div>
 
@@ -46,13 +50,13 @@ export default function HeroMaster({
           </div>
 
           <p className="font-body-sm text-sm text-on-surface-variant/90 leading-relaxed max-w-lg">
-            High dynamic range studio master recording. Pristine audio fidelity with organic acoustic textures and warm harmonics directly from reference library master files.
+            {description}
           </p>
 
           <div className="flex items-center gap-3 pt-2">
             <button
               onClick={() => onPlayMaster?.(album)}
-              className="px-6 py-2 rounded-full bg-primary text-white font-label-md text-sm font-bold hover:bg-primary-bright transition-all shadow-lg flex items-center gap-2"
+              className="px-6 py-2 rounded-full bg-primary text-white font-label-md text-sm font-bold hover:bg-primary-bright transition-all shadow-lg flex items-center gap-2 cursor-pointer"
               type="button"
             >
               <span className="material-symbols-outlined text-[20px] text-white">play_arrow</span>
@@ -60,7 +64,7 @@ export default function HeroMaster({
             </button>
             <button
               onClick={() => onAddToLibrary?.(album)}
-              className="px-4 py-2 rounded-full bg-surface-container-high border border-outline-variant text-on-surface hover:bg-surface-container-highest font-label-md text-sm font-medium transition-all flex items-center gap-2"
+              className="px-4 py-2 rounded-full bg-surface-container-high border border-outline-variant text-on-surface hover:bg-surface-container-highest font-label-md text-sm font-medium transition-all flex items-center gap-2 cursor-pointer"
               type="button"
             >
               <span className="material-symbols-outlined text-[18px]">library_add</span>

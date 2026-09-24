@@ -1,7 +1,9 @@
+import { useNavigate } from 'react-router-dom'
 import { useUIStore } from '../../store/useUIStore'
 
 export default function Header() {
   const { activeTab, setActiveTab, isRightPanelOpen } = useUIStore()
+  const navigate = useNavigate()
 
   const tabs = [
     { id: 'overview', label: 'Overview' },
@@ -17,10 +19,20 @@ export default function Header() {
     >
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-1">
-          <button className="w-7 h-7 rounded flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors">
+          <button
+            type="button"
+            aria-label="Go back"
+            onClick={() => navigate(-1)}
+            className="w-7 h-7 rounded flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors cursor-pointer"
+          >
             <span className="material-symbols-outlined text-[18px]">arrow_back</span>
           </button>
-          <button className="w-7 h-7 rounded flex items-center justify-center text-on-surface-dim cursor-not-allowed">
+          <button
+            type="button"
+            aria-label="Go forward"
+            onClick={() => navigate(1)}
+            className="w-7 h-7 rounded flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors cursor-pointer"
+          >
             <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
           </button>
         </div>
@@ -29,8 +41,12 @@ export default function Header() {
           {tabs.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`px-3 py-1 rounded-lg text-xs transition-colors font-medium ${
+              type="button"
+              onClick={() => {
+                setActiveTab(tab.id)
+                if (tab.id === 'overview') navigate('/')
+              }}
+              className={`px-3 py-1 rounded-lg text-xs transition-colors font-medium cursor-pointer ${
                 activeTab === tab.id
                   ? 'bg-surface-container text-on-surface font-semibold'
                   : 'text-on-surface-variant hover:text-on-surface'

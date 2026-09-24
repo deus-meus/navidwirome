@@ -16,7 +16,7 @@ describe('HeroMaster', () => {
 
     expect(screen.getByText('Master Feature')).toBeInTheDocument()
     expect(screen.getByText('Flown')).toBeInTheDocument()
-    expect(screen.getByText(/Kiasmos/)).toBeInTheDocument()
+    expect(screen.getAllByText(/Kiasmos/).length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText(/24-bit \/ 96kHz Lossless/i)).toBeInTheDocument()
     expect(screen.getByText('Spectrum Density')).toBeInTheDocument()
     expect(screen.getByText(/DR16/i)).toBeInTheDocument()

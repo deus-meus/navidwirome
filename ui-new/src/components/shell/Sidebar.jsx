@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import subsonic from '../../api/subsonic'
 import { useAuthStore } from '../../store/useAuthStore'
 import { useUIStore } from '../../store/useUIStore'
@@ -8,10 +8,24 @@ export default function Sidebar() {
   const [playlists, setPlaylists] = useState([])
   const { user } = useAuthStore()
   const { openSearch, openUpload } = useUIStore()
+  const navigate = useNavigate()
 
   useEffect(() => {
     subsonic.getPlaylists().then(setPlaylists).catch(() => setPlaylists([]))
   }, [])
+
+  const handleCreatePlaylist = async () => {
+    const name = window.prompt('Enter new playlist name:')
+    if (name?.trim()) {
+      try {
+        await subsonic.createPlaylist(null, name.trim())
+        const updated = await subsonic.getPlaylists()
+        setPlaylists(updated)
+      } catch (err) {
+        console.error('Failed to create playlist:', err)
+      }
+    }
+  }
 
   const navItems = [
     { to: '/', label: 'Discover', icon: 'explore' },
@@ -87,7 +101,12 @@ export default function Sidebar() {
             <span className="font-mono text-[11px] uppercase tracking-wider text-on-surface-variant/70">
               User Playlists
             </span>
-            <button className="text-on-surface-variant hover:text-primary transition-colors">
+            <button
+              type="button"
+              aria-label="Create playlist"
+              onClick={handleCreatePlaylist}
+              className="text-on-surface-variant hover:text-primary transition-colors cursor-pointer"
+            >
               <span className="material-symbols-outlined text-[16px]">add</span>
             </button>
           </div>
@@ -98,6 +117,7 @@ export default function Sidebar() {
               playlists.map((pl) => (
                 <div
                   key={pl.id}
+                  onClick={() => navigate('/playlists')}
                   className="flex items-center justify-between px-2 py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-xs cursor-pointer group"
                 >
                   <span className="truncate">{pl.name}</span>

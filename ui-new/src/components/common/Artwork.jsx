@@ -3,7 +3,13 @@ import subsonic from '../../api/subsonic'
 
 export default function Artwork({ record, size = 300, square = true, className = '', alt = 'Album Artwork' }) {
   const [hasError, setHasError] = useState(false)
+  const [prevUrl, setPrevUrl] = useState('')
   const url = record ? subsonic.getCoverArtUrl(record, size, square) : ''
+
+  if (url !== prevUrl) {
+    setPrevUrl(url)
+    setHasError(false)
+  }
 
   if (!url || hasError) {
     return (

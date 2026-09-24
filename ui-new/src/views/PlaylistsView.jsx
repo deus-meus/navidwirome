@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import subsonic from '../api/subsonic'
 import Artwork from '../components/common/Artwork'
+import { usePlayerStore } from '../store/usePlayerStore'
 
 function formatDuration(seconds) {
   if (!seconds) return '0 min'
@@ -14,6 +15,8 @@ export default function PlaylistsView() {
   const [playlists, setPlaylists] = useState([])
   const [searchFilter, setSearchFilter] = useState('')
   const [loading, setLoading] = useState(true)
+
+  const { playTrack } = usePlayerStore()
 
   useEffect(() => {
     setLoading(true)
@@ -29,6 +32,18 @@ export default function PlaylistsView() {
         setLoading(false)
       })
   }, [])
+
+  const handlePlayPlaylist = async (pl) => {
+    try {
+      const data = await subsonic.getPlaylist(pl.id)
+      const songs = data?.entry || []
+      if (songs.length > 0) {
+        playTrack(songs[0], songs)
+      }
+    } catch (err) {
+      console.error('Failed to play playlist:', err)
+    }
+  }
 
   const filtered = playlists.filter((pl) => {
     if (!searchFilter.trim()) return true
@@ -75,6 +90,7 @@ export default function PlaylistsView() {
           {filtered.map((pl) => (
             <div
               key={pl.id}
+              onClick={() => handlePlayPlaylist(pl)}
               className="group flex flex-col gap-2 p-2 rounded-xl bg-surface-container-low border border-outline-variant hover:bg-surface-container hover:border-primary/30 transition-all cursor-pointer"
             >
               <div className="relative aspect-square w-full rounded-lg overflow-hidden bg-surface-container-high shadow-md">
@@ -85,8 +101,12 @@ export default function PlaylistsView() {
                 />
                 <button
                   type="button"
-                  aria-label="Play playlist"
-                  className="absolute bottom-2 right-2 w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-xl hover:scale-105"
+                  aria-label={`Play ${pl.name}`}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handlePlayPlaylist(pl)
+                  }}
+                  className="absolute bottom-2 right-2 w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-xl hover:scale-105 cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-[22px]">play_arrow</span>
                 </button>

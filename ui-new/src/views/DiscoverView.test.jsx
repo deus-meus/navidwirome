@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
+import { BrowserRouter } from 'react-router-dom'
 import DiscoverView from './DiscoverView'
 import subsonic from '../api/subsonic'
 
@@ -16,7 +17,11 @@ describe('DiscoverView', () => {
   })
 
   it('renders all sections: Quick Access, Hero Master, Recent Acquisitions, and Tracklist', async () => {
-    render(<DiscoverView />)
+    render(
+      <BrowserRouter>
+        <DiscoverView />
+      </BrowserRouter>
+    )
 
     // Quick Access
     expect(screen.getByText('Quick Access')).toBeInTheDocument()

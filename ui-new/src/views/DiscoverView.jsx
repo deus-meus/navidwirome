@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import subsonic from '../api/subsonic'
 import { usePlayerStore } from '../store/usePlayerStore'
+import { useUIStore } from '../store/useUIStore'
 import Artwork from '../components/common/Artwork'
 import HeroMaster from '../components/dashboard/HeroMaster'
 import AlbumGrid from '../components/dashboard/AlbumGrid'
@@ -9,9 +11,12 @@ import TrackTable from '../components/dashboard/TrackTable'
 export default function DiscoverView() {
   const [albums, setAlbums] = useState([])
   const [tracks, setTracks] = useState([])
+  const [activeFilter, setActiveFilter] = useState('all')
   const [loading, setLoading] = useState(true)
 
-  const { currentTrack, isPlaying, playTrack } = usePlayerStore()
+  const navigate = useNavigate()
+  const { currentTrack, isPlaying, playTrack, queue } = usePlayerStore()
+  const { activeTab } = useUIStore()
 
   useEffect(() => {
     let isMounted = true
@@ -45,11 +50,9 @@ export default function DiscoverView() {
       const albumSongs = albumData?.song || []
       if (albumSongs.length > 0) {
         playTrack(albumSongs[0], albumSongs)
-      } else {
-        playTrack({ id: album.id, title: album.name || album.title, artist: album.artist })
       }
-    } catch {
-      playTrack({ id: album.id, title: album.name || album.title, artist: album.artist })
+    } catch (err) {
+      console.error('Failed to play album master:', err)
     }
   }
 
@@ -70,24 +73,120 @@ export default function DiscoverView() {
     }
   }
 
+  const handleAddToLibrary = async (album) => {
+    if (!album?.id) return
+    try {
+      await subsonic.star(album.id)
+    } catch (err) {
+      console.error('Failed to star album:', err)
+    }
+  }
+
+  // If Up Next Queue tab is selected in Header
+  if (activeTab === 'queue') {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="font-headline-lg text-2xl md:text-3xl font-semibold text-on-surface tracking-tight">
+            Up Next Queue
+          </h1>
+          <p className="font-body-sm text-xs md:text-sm text-on-surface-variant">
+            Tracks scheduled in the active playback stream
+          </p>
+        </div>
+        {queue.length === 0 ? (
+          <div className="py-20 text-center text-on-surface-variant font-mono text-sm">
+            Queue is empty. Select a song or album to begin streaming.
+          </div>
+        ) : (
+          <TrackTable
+            tracks={queue}
+            currentTrack={currentTrack}
+            isPlaying={isPlaying}
+            onPlayTrack={(track, q) => playTrack(track, q)}
+            onToggleStar={handleToggleStar}
+          />
+        )}
+      </div>
+    )
+  }
+
+  // If History tab is selected in Header
+  if (activeTab === 'history') {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="font-headline-lg text-2xl md:text-3xl font-semibold text-on-surface tracking-tight">
+            Playback History
+          </h1>
+          <p className="font-body-sm text-xs md:text-sm text-on-surface-variant">
+            Recently streamed master recordings
+          </p>
+        </div>
+        {tracks.length === 0 ? (
+          <div className="py-20 text-center text-on-surface-variant font-mono text-sm">
+            No playback history recorded yet.
+          </div>
+        ) : (
+          <TrackTable
+            tracks={tracks}
+            currentTrack={currentTrack}
+            isPlaying={isPlaying}
+            onPlayTrack={(track, q) => playTrack(track, q)}
+            onToggleStar={handleToggleStar}
+          />
+        )}
+      </div>
+    )
+  }
+
   const heroAlbum = albums.length > 0 ? albums[0] : null
   const quickAccessAlbums = albums.slice(0, 8)
-  const recentAcquisitions = albums.length > 1 ? albums.slice(1, 11) : albums
+  const recentAcquisitions =
+    activeFilter === 'hires'
+      ? albums.filter((a) => (a.suffix || '').toLowerCase() === 'flac')
+      : albums.length > 1
+        ? albums.slice(1, 11)
+        : albums
 
   return (
     <div className="space-y-8">
       {/* Top Filter Row */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1">
-        <button className="px-4 py-1.5 rounded-full bg-on-surface text-background font-semibold text-xs transition-all">
+        <button
+          type="button"
+          onClick={() => setActiveFilter('all')}
+          className={`px-4 py-1.5 rounded-full font-semibold text-xs transition-all cursor-pointer ${
+            activeFilter === 'all'
+              ? 'bg-on-surface text-background'
+              : 'bg-surface-container-low border border-outline-variant text-on-surface-variant hover:text-on-surface'
+          }`}
+        >
           All
         </button>
-        <button className="px-4 py-1.5 rounded-full bg-surface-container-low border border-outline-variant text-on-surface-variant hover:text-on-surface text-xs transition-all">
+        <button
+          type="button"
+          onClick={() => navigate('/albums')}
+          className="px-4 py-1.5 rounded-full bg-surface-container-low border border-outline-variant text-on-surface-variant hover:text-on-surface text-xs transition-all cursor-pointer"
+        >
           Albums
         </button>
-        <button className="px-4 py-1.5 rounded-full bg-surface-container-low border border-outline-variant text-on-surface-variant hover:text-on-surface text-xs transition-all">
+        <button
+          type="button"
+          onClick={() => navigate('/playlists')}
+          className="px-4 py-1.5 rounded-full bg-surface-container-low border border-outline-variant text-on-surface-variant hover:text-on-surface text-xs transition-all cursor-pointer"
+        >
           Playlists
         </button>
-        <button className="px-4 py-1.5 rounded-full bg-surface-container-low border border-outline-variant text-on-surface-variant hover:text-on-surface text-xs transition-all flex items-center gap-1.5">
+        <button
+          type="button"
+          onClick={() => setActiveFilter(activeFilter === 'hires' ? 'all' : 'hires')}
+          className={`px-4 py-1.5 rounded-full border border-outline-variant text-xs transition-all flex items-center gap-1.5 cursor-pointer ${
+            activeFilter === 'hires'
+              ? 'bg-primary text-white border-primary font-semibold'
+              : 'bg-surface-container-low text-on-surface-variant hover:text-on-surface'
+          }`}
+        >
           <span className="w-1.5 h-1.5 rounded-full bg-primary" /> Hi-Res Masters
         </button>
       </div>
@@ -110,7 +209,7 @@ export default function DiscoverView() {
             {quickAccessAlbums.map((album) => (
               <div
                 key={album.id}
-                onClick={() => playTrack({ id: album.id, title: album.name, artist: album.artist })}
+                onClick={() => navigate(`/albums/${album.id}`)}
                 className="group relative flex items-center justify-between p-2 rounded-lg bg-surface-container-low border border-outline-variant hover:bg-surface-container hover:border-primary/40 transition-all cursor-pointer"
               >
                 <div className="flex items-center gap-2.5 min-w-0">
@@ -126,7 +225,12 @@ export default function DiscoverView() {
                 </div>
                 <button
                   type="button"
-                  className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-md flex-shrink-0"
+                  aria-label={`Play ${album.name}`}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handlePlayMaster(album)
+                  }}
+                  className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-md flex-shrink-0 hover:bg-primary-bright cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-[18px]">play_arrow</span>
                 </button>
@@ -140,6 +244,7 @@ export default function DiscoverView() {
       <HeroMaster
         album={heroAlbum}
         onPlayMaster={handlePlayMaster}
+        onAddToLibrary={handleAddToLibrary}
       />
 
       {/* Recent Albums & Acquisitions Grid (5 Columns) */}
@@ -148,6 +253,7 @@ export default function DiscoverView() {
         title="Recent Albums & Acquisitions"
         subtitle="Hi-Res catalog synchronizations from personal storage"
         onPlayAlbum={handlePlayMaster}
+        onSelectAlbum={(alb) => navigate(`/albums/${alb.id}`)}
       />
 
       {/* Audio Stream Queue & Master Tracks Table */}
@@ -155,7 +261,7 @@ export default function DiscoverView() {
         tracks={tracks}
         currentTrack={currentTrack}
         isPlaying={isPlaying}
-        onPlayTrack={(track, queue) => playTrack(track, queue)}
+        onPlayTrack={(track, queueTracks) => playTrack(track, queueTracks)}
         onToggleStar={handleToggleStar}
       />
     </div>

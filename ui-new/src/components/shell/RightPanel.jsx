@@ -6,16 +6,10 @@ import LyricsView from '../player/LyricsView'
 import AudioVisualizer from '../player/AudioVisualizer'
 import subsonic from '../../api/subsonic'
 
-const DEFAULT_SAMPLE_LRC = `[00:02.00]Signals dissolve across planetary orbits
-[00:08.50]We decipher echoes in the electromagnetic static
-[00:16.00]Where harmonics fold beyond human perception
-[00:24.00]Analog warmth resonates through silicon gates
-[00:32.00]Frequency response verified bit-perfect direct`
-
 export default function RightPanel() {
   const { currentTrack, currentTime, isPlaying, seek } = usePlayerStore()
   const { isRightPanelOpen, toggleRightPanel } = useUIStore()
-  const [lrc, setLrc] = useState(DEFAULT_SAMPLE_LRC)
+  const [lrc, setLrc] = useState('')
 
   useEffect(() => {
     if (!currentTrack?.id) {
@@ -38,11 +32,11 @@ export default function RightPanel() {
             .join('\n')
           setLrc(formatted)
         } else {
-          setLrc(DEFAULT_SAMPLE_LRC)
+          setLrc('')
         }
       })
       .catch(() => {
-        setLrc(DEFAULT_SAMPLE_LRC)
+        setLrc('')
       })
   }, [currentTrack?.id])
 

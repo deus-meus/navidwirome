@@ -97,14 +97,27 @@ class SubsonicClient {
   }
 
   getCoverArtUrl(record, size = 300, square = true) {
-    if (!record?.id) return ''
+    if (!record) return ''
+    if (typeof record === 'string') {
+      const id = record.includes('-') ? record : `al-${record}`
+      return this.buildUrl('getCoverArt', { id, size, square })
+    }
+    if (record.coverArt) {
+      const id = String(record.coverArt).includes('-') ? record.coverArt : `al-${record.coverArt}`
+      return this.buildUrl('getCoverArt', { id, size, square })
+    }
+    if (!record.id) return ''
     let id = record.id
-    if (record.album && !record.songCount) {
+    if (record.albumId) {
+      id = `al-${record.albumId}`
+    } else if (record.album && !record.songCount) {
       id = `mf-${record.id}`
     } else if (record.albumArtist || record.songCount !== undefined || (record.name && record.artist && !record.title)) {
       id = `al-${record.id}`
     } else if (record.sync !== undefined) {
       id = `pl-${record.id}`
+    } else if (record.title && record.artist) {
+      id = `mf-${record.id}`
     } else {
       id = `ar-${record.id}`
     }
@@ -114,6 +127,20 @@ class SubsonicClient {
   async getPlaylists() {
     const res = await this.request('getPlaylists')
     return res?.playlists?.playlist || []
+  }
+
+  async getPlaylist(id) {
+    const res = await this.request('getPlaylist', { id })
+    return res?.playlist || null
+  }
+
+  async createPlaylist(playlistId, name, songIds = []) {
+    const params = {}
+    if (playlistId) params.playlistId = playlistId
+    if (name) params.name = name
+    if (songIds.length > 0) params.songId = songIds
+    const res = await this.request('createPlaylist', params)
+    return res?.playlist || null
   }
 
   async getAlbumList2(type = 'recent', size = 20) {
