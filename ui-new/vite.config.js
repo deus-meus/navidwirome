@@ -6,7 +6,10 @@ export default defineConfig({
   server: {
     port: 3000,
     proxy: {
-      '^/(auth|api|rest|backgrounds)/.*': 'http://localhost:4533',
+      '/auth': 'http://localhost:4533',
+      '/api': 'http://localhost:4533',
+      '/rest': 'http://localhost:4533',
+      '/backgrounds': 'http://localhost:4533',
     },
   },
   test: {
