@@ -7,7 +7,7 @@ import { useUIStore } from '../../store/useUIStore'
 export default function Sidebar() {
   const [playlists, setPlaylists] = useState([])
   const { user } = useAuthStore()
-  const { openSearch } = useUIStore()
+  const { openSearch, openUpload } = useUIStore()
 
   useEffect(() => {
     subsonic.getPlaylists().then(setPlaylists).catch(() => setPlaylists([]))
@@ -108,6 +108,20 @@ export default function Sidebar() {
               ))
             )}
           </div>
+        </div>
+
+        {/* Upload Music Action */}
+        <div className="pt-2 px-1">
+          <button
+            type="button"
+            onClick={openUpload}
+            className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 hover:border-primary/40 text-xs font-semibold transition-all cursor-pointer shadow-sm group"
+          >
+            <span className="material-symbols-outlined text-[18px] group-hover:scale-110 transition-transform">
+              cloud_upload
+            </span>
+            <span>Upload Music</span>
+          </button>
         </div>
       </div>
 

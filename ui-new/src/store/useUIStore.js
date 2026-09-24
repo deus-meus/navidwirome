@@ -13,4 +13,8 @@ export const useUIStore = create((set) => ({
   isUploadOpen: false,
   openUpload: () => set({ isUploadOpen: true }),
   closeUpload: () => set({ isUploadOpen: false }),
+
+  tagEditorTrack: null,
+  openTagEditor: (track) => set({ tagEditorTrack: track }),
+  closeTagEditor: () => set({ tagEditorTrack: null }),
 }))

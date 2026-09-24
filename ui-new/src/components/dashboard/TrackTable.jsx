@@ -14,6 +14,7 @@ export default function TrackTable({
   isPlaying = false,
   onPlayTrack,
   onToggleStar,
+  onEditTags,
 }) {
   if (!tracks || tracks.length === 0) {
     return null
@@ -41,7 +42,7 @@ export default function TrackTable({
               <th className="hidden sm:table-cell">Album</th>
               <th className="hidden md:table-cell">Bitrate</th>
               <th className="w-20 text-right pr-4">Time</th>
-              <th className="w-10 text-center"></th>
+              <th className="w-16 text-center"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-outline-variant/30">
@@ -118,24 +119,39 @@ export default function TrackTable({
                       {formatDuration(track.duration)}
                     </span>
                   </td>
-                  <td className="w-10 text-center rounded-r-lg">
-                    <button
-                      type="button"
-                      aria-label="Favorite track"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onToggleStar?.(track)
-                      }}
-                      className="text-on-surface-variant hover:text-primary transition-colors inline-flex items-center justify-center p-1"
-                    >
-                      <span
-                        className={`material-symbols-outlined text-[18px] ${
-                          track.starred ? 'text-primary' : ''
-                        }`}
+                  <td className="w-16 text-center rounded-r-lg">
+                    <div className="flex items-center justify-center gap-1">
+                      <button
+                        type="button"
+                        aria-label="Edit track tags"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onEditTags?.(track)
+                        }}
+                        className="text-on-surface-variant hover:text-primary transition-colors inline-flex items-center justify-center p-1"
                       >
-                        {track.starred ? 'favorite' : 'favorite'}
-                      </span>
-                    </button>
+                        <span className="material-symbols-outlined text-[18px]">
+                          edit_note
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Favorite track"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onToggleStar?.(track)
+                        }}
+                        className="text-on-surface-variant hover:text-primary transition-colors inline-flex items-center justify-center p-1"
+                      >
+                        <span
+                          className={`material-symbols-outlined text-[18px] ${
+                            track.starred ? 'text-primary' : ''
+                          }`}
+                        >
+                          {track.starred ? 'favorite' : 'favorite'}
+                        </span>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               )

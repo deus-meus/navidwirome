@@ -69,4 +69,13 @@ describe('TrackTable', () => {
     fireEvent.click(starBtns[0])
     expect(handleStar).toHaveBeenCalledWith(mockTracks[0])
   })
+
+  it('triggers onEditTags when clicking the edit track tags button', () => {
+    const handleEdit = vi.fn()
+    render(<TrackTable tracks={mockTracks} onEditTags={handleEdit} />)
+
+    const editBtns = screen.getAllByRole('button', { name: /edit track tags/i })
+    fireEvent.click(editBtns[0])
+    expect(handleEdit).toHaveBeenCalledWith(mockTracks[0])
+  })
 })

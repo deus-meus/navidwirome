@@ -5,11 +5,22 @@ import Header from './Header'
 import PlayerBar from './PlayerBar'
 import RightPanel from './RightPanel'
 import SearchModal from '../search/SearchModal'
+import UploadModal from '../modals/UploadModal'
+import TagEditorModal from '../modals/TagEditorModal'
 import { useUIStore } from '../../store/useUIStore'
 import { usePlayerStore } from '../../store/usePlayerStore'
 
 export default function ShellLayout({ children }) {
-  const { isRightPanelOpen, isSearchOpen, openSearch, closeSearch } = useUIStore()
+  const {
+    isRightPanelOpen,
+    isSearchOpen,
+    openSearch,
+    closeSearch,
+    isUploadOpen,
+    closeUpload,
+    tagEditorTrack,
+    closeTagEditor,
+  } = useUIStore()
   const { playTrack } = usePlayerStore()
   const navigate = useNavigate()
 
@@ -44,6 +55,21 @@ export default function ShellLayout({ children }) {
         onSelectTrack={(track, queue) => playTrack(track, queue)}
         onSelectAlbum={(album) => navigate(`/albums/${album.id}`)}
         onSelectArtist={(artist) => navigate(`/artists/${artist.id}`)}
+      />
+
+      <UploadModal
+        isOpen={isUploadOpen}
+        onClose={closeUpload}
+        onUploadComplete={() => {}}
+      />
+
+      <TagEditorModal
+        isOpen={Boolean(tagEditorTrack)}
+        track={tagEditorTrack}
+        onClose={closeTagEditor}
+        onSaveTags={() => {
+          closeTagEditor()
+        }}
       />
     </div>
   )
