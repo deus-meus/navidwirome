@@ -211,16 +211,18 @@ export default function SettingsView() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* User Profile Card */}
           <div className="p-5 rounded-2xl bg-surface-container-low border border-outline-variant space-y-4">
-            <div className="flex items-center gap-3.5">
-              <div className="w-14 h-14 rounded-full bg-primary flex items-center justify-center text-white text-xl font-semibold shadow-md flex-shrink-0 leading-none">
-                {user?.username ? user.username.charAt(0).toUpperCase() : 'A'}
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-full bg-primary flex items-center justify-center text-white text-xl font-bold shadow-md flex-shrink-0 select-none overflow-hidden">
+                <span className="leading-none flex items-center justify-center text-center">
+                  {user?.username ? user.username.charAt(0).toUpperCase() : 'A'}
+                </span>
               </div>
-              <div>
-                <h3 className="font-serif text-lg font-semibold text-on-surface">
+              <div className="space-y-1">
+                <h3 className="font-serif text-lg font-semibold text-on-surface leading-tight">
                   {user?.name || user?.username || 'User'}
                 </h3>
-                <div className="flex items-center gap-2 pt-1">
-                  <span className="px-2.5 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30 font-mono text-[10px] font-bold uppercase tracking-wider">
+                <div className="flex items-center gap-2 pt-0.5">
+                  <span className="inline-flex items-center justify-center px-2.5 py-1 rounded-lg bg-primary/20 text-primary border border-primary/30 font-mono text-[10px] font-bold uppercase tracking-wider leading-none text-center">
                     {user?.isAdmin ? 'Administrator' : 'Standard User'}
                   </span>
                   <span className="text-xs text-on-surface-variant font-mono">
@@ -257,7 +259,7 @@ export default function SettingsView() {
                 <h3 className="font-serif text-base font-semibold text-on-surface">
                   Library Indexer
                 </h3>
-                <span className="font-mono text-[10px] px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/20">
+                <span className="inline-flex items-center justify-center font-mono text-[10px] px-2.5 py-1 rounded-lg bg-primary/15 text-primary border border-primary/20 leading-none text-center">
                   Subsonic Native
                 </span>
               </div>
@@ -460,7 +462,7 @@ export default function SettingsView() {
                       </td>
                       <td className="py-3 px-4">
                         <span
-                          className={`px-2 py-0.5 rounded-full font-mono text-[9px] font-bold uppercase ${
+                          className={`inline-flex items-center justify-center px-2 py-0.5 rounded-lg font-mono text-[9px] font-bold uppercase leading-none text-center ${
                             u.isAdmin
                               ? 'bg-primary/20 text-primary border border-primary/30'
                               : 'bg-surface-container text-on-surface-variant'
@@ -472,12 +474,12 @@ export default function SettingsView() {
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-1.5">
                           {u.canUpload && (
-                            <span className="px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-mono text-[9px]">
+                            <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-lg bg-surface-container text-on-surface-variant font-mono text-[9px] leading-none text-center">
                               Upload
                             </span>
                           )}
                           {u.canEditTags && (
-                            <span className="px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-mono text-[9px]">
+                            <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-lg bg-surface-container text-on-surface-variant font-mono text-[9px] leading-none text-center">
                               Tags
                             </span>
                           )}

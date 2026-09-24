@@ -156,7 +156,7 @@ export default function DiscoverView() {
         <button
           type="button"
           onClick={() => setActiveFilter('all')}
-          className={`px-4 py-1.5 rounded-full font-semibold text-xs transition-all cursor-pointer ${
+          className={`px-4 py-1.5 rounded-xl font-semibold text-xs transition-all cursor-pointer ${
             activeFilter === 'all'
               ? 'bg-on-surface text-background'
               : 'bg-surface-container-low border border-outline-variant text-on-surface-variant hover:text-on-surface'
@@ -167,21 +167,21 @@ export default function DiscoverView() {
         <button
           type="button"
           onClick={() => navigate('/albums')}
-          className="px-4 py-1.5 rounded-full bg-surface-container-low border border-outline-variant text-on-surface-variant hover:text-on-surface text-xs transition-all cursor-pointer"
+          className="px-4 py-1.5 rounded-xl bg-surface-container-low border border-outline-variant text-on-surface-variant hover:text-on-surface text-xs transition-all cursor-pointer"
         >
           Albums
         </button>
         <button
           type="button"
           onClick={() => navigate('/playlists')}
-          className="px-4 py-1.5 rounded-full bg-surface-container-low border border-outline-variant text-on-surface-variant hover:text-on-surface text-xs transition-all cursor-pointer"
+          className="px-4 py-1.5 rounded-xl bg-surface-container-low border border-outline-variant text-on-surface-variant hover:text-on-surface text-xs transition-all cursor-pointer"
         >
           Playlists
         </button>
         <button
           type="button"
           onClick={() => setActiveFilter(activeFilter === 'hires' ? 'all' : 'hires')}
-          className={`px-4 py-1.5 rounded-full border border-outline-variant text-xs transition-all flex items-center gap-1.5 cursor-pointer ${
+          className={`px-4 py-1.5 rounded-xl border border-outline-variant text-xs transition-all flex items-center gap-1.5 cursor-pointer ${
             activeFilter === 'hires'
               ? 'bg-primary text-white border-primary font-semibold'
               : 'bg-surface-container-low text-on-surface-variant hover:text-on-surface'

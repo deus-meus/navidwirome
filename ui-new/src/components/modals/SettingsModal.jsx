@@ -231,7 +231,7 @@ export default function SettingsModal({ isOpen, onClose }) {
                     {user?.name || user?.username || 'User'}
                   </h4>
                   <div className="flex items-center gap-2 pt-0.5">
-                    <span className="px-2 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30 font-mono text-[10px] font-bold uppercase tracking-wider">
+                    <span className="inline-flex items-center justify-center px-2.5 py-1 rounded-lg bg-primary/20 text-primary border border-primary/30 font-mono text-[10px] font-bold uppercase tracking-wider leading-none text-center">
                       {user?.isAdmin ? 'Administrator' : 'Standard User'}
                     </span>
                     <span className="text-[11px] text-on-surface-variant/80 font-mono">

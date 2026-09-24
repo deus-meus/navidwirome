@@ -65,7 +65,7 @@ export default function HeroMaster({
           <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 pt-2">
             <button
               onClick={() => onPlayMaster?.(album)}
-              className="px-6 py-2.5 rounded-full bg-primary text-white font-label-md text-sm font-bold hover:bg-primary-bright transition-all shadow-xl hover:scale-105 flex items-center gap-2 cursor-pointer whitespace-nowrap flex-shrink-0 leading-none"
+              className="px-6 py-2.5 rounded-xl bg-primary text-white font-label-md text-sm font-bold hover:bg-primary-bright transition-all shadow-xl hover:scale-105 flex items-center gap-2 cursor-pointer whitespace-nowrap flex-shrink-0 leading-none"
               type="button"
             >
               <span className="material-symbols-outlined text-[20px] text-white leading-none">play_arrow</span>
@@ -74,7 +74,7 @@ export default function HeroMaster({
 
             <button
               onClick={() => (onAddToQueue ? onAddToQueue(album) : onAddToLibrary?.(album))}
-              className="px-5 py-2.5 rounded-full bg-surface-container-high border border-outline-variant text-on-surface hover:bg-surface-container-highest hover:text-primary font-label-md text-sm font-medium transition-all flex items-center gap-2 cursor-pointer shadow-sm whitespace-nowrap flex-shrink-0 leading-none"
+              className="px-5 py-2.5 rounded-xl bg-surface-container-high border border-outline-variant text-on-surface hover:bg-surface-container-highest hover:text-primary font-label-md text-sm font-medium transition-all flex items-center gap-2 cursor-pointer shadow-sm whitespace-nowrap flex-shrink-0 leading-none"
               type="button"
             >
               <span className="material-symbols-outlined text-[19px] leading-none">queue_music</span>

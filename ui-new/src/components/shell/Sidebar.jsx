@@ -277,10 +277,10 @@ export default function Sidebar() {
           <button
             type="button"
             aria-label="Profile Menu"
-            className="w-7 h-7 rounded-lg text-on-surface-variant group-hover:text-primary flex items-center justify-center transition-colors leading-none"
+            className="w-7 h-7 rounded-xl text-on-surface-variant group-hover:text-primary flex items-center justify-center transition-colors leading-none"
           >
             <span className="material-symbols-outlined text-[18px] leading-none">
-              {isProfileMenuOpen ? 'expand_less' : 'settings'}
+              more_vert
             </span>
           </button>
         </div>
