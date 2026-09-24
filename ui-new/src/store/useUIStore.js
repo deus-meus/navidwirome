@@ -6,6 +6,9 @@ export const useUIStore = create((set) => ({
   activeTab: 'overview', // 'overview' | 'queue' | 'history'
   setActiveTab: (tab) => set({ activeTab: tab }),
 
+  activePanelTab: 'monitor', // 'monitor' | 'queue'
+  setActivePanelTab: (tab) => set({ activePanelTab: tab }),
+
   isSearchOpen: false,
   openSearch: () => set({ isSearchOpen: true }),
   closeSearch: () => set({ isSearchOpen: false }),

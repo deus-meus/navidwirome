@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../store/useAuthStore'
 import { useUIStore } from '../../store/useUIStore'
@@ -7,14 +7,38 @@ import CreatePlaylistModal from '../modals/CreatePlaylistModal'
 
 export default function Sidebar() {
   const [isCreateOpen, setIsCreateOpen] = useState(false)
-  const { user } = useAuthStore()
-  const { openSearch, openSettings } = useUIStore()
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
+  const profileMenuRef = useRef(null)
+  const { user, logout } = useAuthStore()
+  const { openSearch, setActivePanelTab } = useUIStore()
   const { playlists, fetchPlaylists } = usePlaylistStore()
   const navigate = useNavigate()
 
   useEffect(() => {
     fetchPlaylists()
   }, [fetchPlaylists])
+
+  // Click outside listener for profile popover
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(e.target)) {
+        setIsProfileMenuOpen(false)
+      }
+    }
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setIsProfileMenuOpen(false)
+      }
+    }
+    if (isProfileMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+      document.addEventListener('keydown', handleKeyDown)
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isProfileMenuOpen])
 
   const handleCreatePlaylist = () => {
     setIsCreateOpen(true)
@@ -124,12 +148,118 @@ export default function Sidebar() {
         </div>
       </div>
 
-      {/* User Status Bar & Profile Settings Entry */}
-      <div className="p-3 border-t border-outline-variant bg-surface-container-lowest/90">
+      {/* User Status Bar & Profile Flyout Menu (Image #58) */}
+      <div className="relative p-3 border-t border-outline-variant bg-surface-container-lowest/90" ref={profileMenuRef}>
+        {/* Floating Context Popover Menu */}
+        {isProfileMenuOpen && (
+          <div
+            role="menu"
+            aria-label="User Profile Menu"
+            className="absolute bottom-16 left-3 right-3 bg-surface-container-high border border-outline-variant rounded-2xl shadow-2xl p-1.5 z-50 animate-in fade-in slide-in-from-bottom-2 space-y-0.5"
+          >
+            {/* User Info Header */}
+            <div className="px-3 py-2 border-b border-outline-variant/60 flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-semibold flex-shrink-0 leading-none">
+                {user?.username ? user.username.charAt(0).toUpperCase() : 'A'}
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-on-surface truncate leading-tight">
+                  {user?.name || user?.username || 'Audiophile'}
+                </p>
+                <p className="text-[10px] font-mono text-primary truncate">
+                  {user?.isAdmin ? 'Administrator' : 'Standard Listener'}
+                </p>
+              </div>
+            </div>
+
+            {/* Menu Items */}
+            <div className="pt-1 space-y-0.5">
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setIsProfileMenuOpen(false)
+                  navigate('/settings')
+                }}
+                className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-on-surface hover:bg-surface-container transition-colors cursor-pointer group"
+              >
+                <div className="flex items-center gap-2.5">
+                  <span className="material-symbols-outlined text-[17px] text-on-surface-variant group-hover:text-primary transition-colors leading-none">
+                    settings
+                  </span>
+                  <span>Settings</span>
+                </div>
+                <span className="material-symbols-outlined text-[15px] text-on-surface-variant/60 group-hover:text-on-surface leading-none">
+                  chevron_right
+                </span>
+              </button>
+
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setIsProfileMenuOpen(false)
+                  setActivePanelTab('queue')
+                }}
+                className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-on-surface hover:bg-surface-container transition-colors cursor-pointer group"
+              >
+                <div className="flex items-center gap-2.5">
+                  <span className="material-symbols-outlined text-[17px] text-on-surface-variant group-hover:text-primary transition-colors leading-none">
+                    queue_music
+                  </span>
+                  <span>Playback Queue</span>
+                </div>
+                <span className="material-symbols-outlined text-[15px] text-on-surface-variant/60 group-hover:text-on-surface leading-none">
+                  chevron_right
+                </span>
+              </button>
+
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setIsProfileMenuOpen(false)
+                  navigate('/playlists')
+                }}
+                className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-on-surface hover:bg-surface-container transition-colors cursor-pointer group"
+              >
+                <div className="flex items-center gap-2.5">
+                  <span className="material-symbols-outlined text-[17px] text-on-surface-variant group-hover:text-primary transition-colors leading-none">
+                    playlist_play
+                  </span>
+                  <span>User Playlists</span>
+                </div>
+                <span className="material-symbols-outlined text-[15px] text-on-surface-variant/60 group-hover:text-on-surface leading-none">
+                  chevron_right
+                </span>
+              </button>
+
+              <div className="my-1 border-t border-outline-variant/60" />
+
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setIsProfileMenuOpen(false)
+                  logout()
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-on-surface-variant hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer leading-none"
+              >
+                <span className="material-symbols-outlined text-[17px] leading-none">logout</span>
+                <span>Log out</span>
+              </button>
+            </div>
+          </div>
+        )}
+
         <div
-          onClick={openSettings}
-          className="flex items-center justify-between p-1.5 rounded-xl hover:bg-surface-container border border-transparent hover:border-outline-variant/60 transition-all cursor-pointer group"
-          title="Open Settings & Profile"
+          onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+          className={`flex items-center justify-between p-1.5 rounded-xl hover:bg-surface-container border transition-all cursor-pointer group ${
+            isProfileMenuOpen
+              ? 'bg-surface-container border-primary/40'
+              : 'border-transparent hover:border-outline-variant/60'
+          }`}
+          title="Open Profile Menu"
         >
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs flex-shrink-0 group-hover:scale-105 transition-transform shadow-sm leading-none">
@@ -146,10 +276,12 @@ export default function Sidebar() {
           </div>
           <button
             type="button"
-            aria-label="Open settings"
+            aria-label="Profile Menu"
             className="w-7 h-7 rounded-lg text-on-surface-variant group-hover:text-primary flex items-center justify-center transition-colors leading-none"
           >
-            <span className="material-symbols-outlined text-[18px] leading-none">settings</span>
+            <span className="material-symbols-outlined text-[18px] leading-none">
+              {isProfileMenuOpen ? 'expand_less' : 'settings'}
+            </span>
           </button>
         </div>
       </div>

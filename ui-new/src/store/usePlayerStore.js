@@ -1,6 +1,8 @@
 import { create } from 'zustand'
 import { audioManager } from '../audio/audioManager'
 import subsonic from '../api/subsonic'
+import { showToast } from './useToastStore'
+import { useUIStore } from './useUIStore'
 
 export const usePlayerStore = create((set, get) => {
   // Bind manager events to store
@@ -88,11 +90,50 @@ export const usePlayerStore = create((set, get) => {
     },
 
     addToQueue: (track) => {
-      if (!track) return
+      if (!track) return false
+      const { queue } = get()
+      const exists = queue.some((t) => t.id === track.id)
+      if (exists) {
+        showToast(`"${track.title || 'Track'}" is already in queue`, 'info', 'queue_music')
+        useUIStore.getState().setActivePanelTab?.('queue')
+        return false
+      }
+
       set((state) => ({
         queue: [...state.queue, track],
         queueIndex: state.queueIndex === -1 ? 0 : state.queueIndex,
       }))
+      showToast(`Added "${track.title || 'Track'}" to queue`, 'success', 'queue_music')
+      useUIStore.getState().setActivePanelTab?.('queue')
+      return true
+    },
+
+    reorderQueue: (sourceIndex, targetIndex) => {
+      const { queue, queueIndex } = get()
+      if (
+        sourceIndex === targetIndex ||
+        sourceIndex < 0 ||
+        sourceIndex >= queue.length ||
+        targetIndex < 0 ||
+        targetIndex >= queue.length
+      ) {
+        return
+      }
+
+      const newQueue = [...queue]
+      const [movedItem] = newQueue.splice(sourceIndex, 1)
+      newQueue.splice(targetIndex, 0, movedItem)
+
+      let newIndex = queueIndex
+      if (queueIndex === sourceIndex) {
+        newIndex = targetIndex
+      } else if (sourceIndex < queueIndex && targetIndex >= queueIndex) {
+        newIndex -= 1
+      } else if (sourceIndex > queueIndex && targetIndex <= queueIndex) {
+        newIndex += 1
+      }
+
+      set({ queue: newQueue, queueIndex: newIndex })
     },
 
     removeFromQueue: (index) =>

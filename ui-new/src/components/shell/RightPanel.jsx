@@ -7,11 +7,49 @@ import AudioVisualizer from '../player/AudioVisualizer'
 import subsonic from '../../api/subsonic'
 
 export default function RightPanel() {
-  const { currentTrack, currentTime, isPlaying, seek, queue, playTrack, removeFromQueue, clearQueue } =
-    usePlayerStore()
-  const { isRightPanelOpen } = useUIStore()
-  const [activePanelTab, setActivePanelTab] = useState('monitor') // 'monitor' | 'queue'
+  const {
+    currentTrack,
+    currentTime,
+    isPlaying,
+    seek,
+    queue,
+    playTrack,
+    removeFromQueue,
+    clearQueue,
+    reorderQueue,
+  } = usePlayerStore()
+  const { isRightPanelOpen, activePanelTab, setActivePanelTab } = useUIStore()
   const [lrc, setLrc] = useState('')
+  const [draggedIndex, setDraggedIndex] = useState(null)
+  const [dragOverIndex, setDragOverIndex] = useState(null)
+
+  const handleDragStart = (e, index) => {
+    setDraggedIndex(index)
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', String(index))
+  }
+
+  const handleDragOver = (e, index) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    if (dragOverIndex !== index) {
+      setDragOverIndex(index)
+    }
+  }
+
+  const handleDrop = (e, targetIndex) => {
+    e.preventDefault()
+    if (draggedIndex !== null && draggedIndex !== targetIndex) {
+      reorderQueue(draggedIndex, targetIndex)
+    }
+    setDraggedIndex(null)
+    setDragOverIndex(null)
+  }
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null)
+    setDragOverIndex(null)
+  }
 
   useEffect(() => {
     if (!currentTrack?.id) {
@@ -113,14 +151,29 @@ export default function RightPanel() {
                 return (
                   <div
                     key={`${track.id}-${idx}`}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, idx)}
+                    onDragOver={(e) => handleDragOver(e, idx)}
+                    onDrop={(e) => handleDrop(e, idx)}
+                    onDragEnd={handleDragEnd}
                     onClick={() => playTrack(track, queue)}
                     className={`group flex items-center justify-between p-2 rounded-xl transition-all cursor-pointer ${
-                      isCurrent
+                      draggedIndex === idx
+                        ? 'opacity-40 border border-dashed border-primary bg-primary/5'
+                        : dragOverIndex === idx && draggedIndex !== idx
+                        ? 'border-t-2 border-primary bg-primary/10'
+                        : isCurrent
                         ? 'bg-surface-container text-primary font-semibold border border-primary/20'
-                        : 'hover:bg-surface-container-high text-on-surface'
+                        : 'hover:bg-surface-container-high text-on-surface border border-transparent'
                     }`}
                   >
-                    <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                    <div className="flex items-center gap-2 min-w-0 pr-2">
+                      <span
+                        className="material-symbols-outlined text-[15px] text-on-surface-variant/40 group-hover:text-primary cursor-grab active:cursor-grabbing leading-none select-none flex-shrink-0"
+                        title="Drag to reorder"
+                      >
+                        drag_indicator
+                      </span>
                       <div className="w-8 h-8 rounded-lg overflow-hidden bg-surface-container-high flex-shrink-0 border border-outline-variant/60">
                         <Artwork record={track} size={80} className="w-full h-full object-cover" />
                       </div>

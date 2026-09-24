@@ -120,12 +120,12 @@ export default function AddToPlaylistModal({ isOpen, track, onClose }) {
             value={newPlaylistName}
             onChange={(e) => setNewPlaylistName(e.target.value)}
             placeholder="New playlist name..."
-            className="flex-1 h-9 px-3 bg-surface-container-low border border-outline-variant rounded-lg text-xs text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:border-primary"
+            className="flex-1 h-9 px-3 bg-surface-container-low border border-outline-variant rounded-xl text-xs text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:border-primary"
           />
           <button
             type="submit"
             disabled={!newPlaylistName.trim() || submitting}
-            className="px-3 h-9 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-primary-bright disabled:opacity-50 transition-all cursor-pointer flex items-center gap-1.5"
+            className="px-3.5 h-9 rounded-xl bg-primary text-white text-xs font-semibold hover:bg-primary-bright disabled:opacity-50 transition-all cursor-pointer flex items-center gap-1.5"
           >
             <span className="material-symbols-outlined text-[16px]">add</span>
             <span>Create &amp; Add</span>

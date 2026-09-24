@@ -90,15 +90,17 @@ export default function PlaylistsView() {
             />
           </div>
 
-          <button
-            type="button"
-            aria-label="Create Playlist"
-            onClick={() => setIsCreateOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 h-9 rounded-xl bg-primary text-white text-xs font-semibold hover:bg-primary-bright transition-all shadow-md flex-shrink-0 cursor-pointer leading-none"
-          >
-            <span className="material-symbols-outlined text-[18px] leading-none">add</span>
-            <span>Create Playlist</span>
-          </button>
+          {playlists.length > 0 && (
+            <button
+              type="button"
+              aria-label="Create Playlist"
+              onClick={() => setIsCreateOpen(true)}
+              className="flex items-center gap-1.5 px-3.5 h-9 rounded-xl bg-primary text-white text-xs font-semibold hover:bg-primary-bright transition-all shadow-md flex-shrink-0 cursor-pointer leading-none"
+            >
+              <span className="material-symbols-outlined text-[18px] leading-none">add</span>
+              <span>Create Playlist</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -123,7 +125,7 @@ export default function PlaylistsView() {
             type="button"
             aria-label="Create Playlist"
             onClick={() => setIsCreateOpen(true)}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-white text-xs font-semibold hover:bg-primary-bright transition-all shadow-lg cursor-pointer hover:scale-105 leading-none"
+            className="flex items-center gap-2 px-5 h-9 rounded-xl bg-primary text-white text-xs font-semibold hover:bg-primary-bright transition-all shadow-md cursor-pointer leading-none"
           >
             <span className="material-symbols-outlined text-[18px] leading-none">add</span>
             <span>Create First Playlist</span>

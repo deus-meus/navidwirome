@@ -30,4 +30,22 @@ describe('RightPanel', () => {
     expect(screen.getByText(/Live Synchronized Lyrics/i)).toBeInTheDocument()
     expect(screen.getByText(/Audio Pipeline Telemetry/i)).toBeInTheDocument()
   })
+
+  it('renders queue tab and displays queued tracks with drag handles', () => {
+    useUIStore.setState({ isRightPanelOpen: true, activePanelTab: 'queue' })
+    usePlayerStore.setState({
+      queue: [
+        { id: 's1', title: 'Song 1', artist: 'Artist 1' },
+        { id: 's2', title: 'Song 2', artist: 'Artist 2' },
+      ],
+      currentTrack: { id: 's1', title: 'Song 1', artist: 'Artist 1' },
+    })
+
+    render(<RightPanel />)
+
+    expect(screen.getByText(/Playback Queue \(2\)/i)).toBeInTheDocument()
+    expect(screen.getByText('Song 1')).toBeInTheDocument()
+    expect(screen.getByText('Song 2')).toBeInTheDocument()
+    expect(screen.getAllByTitle('Drag to reorder').length).toBe(2)
+  })
 })
