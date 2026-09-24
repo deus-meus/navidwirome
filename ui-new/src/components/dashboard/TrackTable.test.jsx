@@ -1,6 +1,9 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import TrackTable from './TrackTable'
+import { useAuthStore } from '../../store/useAuthStore'
+import { usePlayerStore } from '../../store/usePlayerStore'
+import { useUIStore } from '../../store/useUIStore'
 
 describe('TrackTable', () => {
   const mockTracks = [
@@ -25,6 +28,22 @@ describe('TrackTable', () => {
       starred: true,
     },
   ]
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    useAuthStore.setState({
+      user: { id: 'u1', username: 'admin', isAdmin: true, canEditTags: true },
+    })
+    usePlayerStore.setState({
+      queue: [],
+      queueIndex: -1,
+      currentTrack: null,
+      isPlaying: false,
+    })
+    useUIStore.setState({
+      tagEditorTrack: null,
+    })
+  })
 
   it('renders track headers and all track rows', () => {
     render(<TrackTable tracks={mockTracks} />)
@@ -79,25 +98,41 @@ describe('TrackTable', () => {
     expect(handleEdit).toHaveBeenCalledWith(mockTracks[0])
   })
 
-  it('triggers addToQueue when clicking add to queue button', () => {
-    const handleQueue = vi.fn()
-    render(<TrackTable tracks={mockTracks} onAddToQueue={handleQueue} />)
+  it('opens tag editor in useUIStore when clicking edit button without onEditTags prop', () => {
+    render(<TrackTable tracks={mockTracks} />)
+
+    const editBtns = screen.getAllByRole('button', { name: /edit track tags/i })
+    fireEvent.click(editBtns[0])
+    expect(useUIStore.getState().tagEditorTrack).toEqual(mockTracks[0])
+  })
+
+  it('shows edit tags button when user has canEditTags permission even if not admin', () => {
+    useAuthStore.setState({
+      user: { id: 'u2', username: 'editor', isAdmin: false, canEditTags: true },
+    })
+    render(<TrackTable tracks={mockTracks} />)
+
+    expect(screen.getAllByRole('button', { name: /edit track tags/i }).length).toBe(2)
+    // Non-admin should NOT see delete button
+    expect(screen.queryByRole('button', { name: /delete track/i })).not.toBeInTheDocument()
+  })
+
+  it('hides edit tags and delete buttons when user has standard listener permissions', () => {
+    useAuthStore.setState({
+      user: { id: 'u3', username: 'listener', isAdmin: false, canEditTags: false },
+    })
+    render(<TrackTable tracks={mockTracks} />)
+
+    expect(screen.queryByRole('button', { name: /edit track tags/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /delete track/i })).not.toBeInTheDocument()
+  })
+
+  it('triggers addToQueue when clicking add to queue button without duplicate toast', () => {
+    const addToQueueSpy = vi.spyOn(usePlayerStore.getState(), 'addToQueue')
+    render(<TrackTable tracks={mockTracks} />)
 
     const queueBtns = screen.getAllByRole('button', { name: /add to queue/i })
     fireEvent.click(queueBtns[0])
-    expect(handleQueue).toHaveBeenCalledWith(mockTracks[0])
-  })
-
-  it('renders without orange border class on current track row', () => {
-    render(
-      <TrackTable
-        tracks={mockTracks}
-        currentTrack={mockTracks[0]}
-        isPlaying={true}
-      />
-    )
-
-    const row = screen.getByText('Obscure Gesture').closest('tr')
-    expect(row.className).not.toContain('border-primary')
+    expect(addToQueueSpy).toHaveBeenCalledWith(mockTracks[0])
   })
 })

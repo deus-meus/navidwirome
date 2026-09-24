@@ -212,8 +212,8 @@ export default function SettingsView() {
           {/* User Profile Card */}
           <div className="p-5 rounded-2xl bg-surface-container-low border border-outline-variant space-y-4">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-full bg-primary flex items-center justify-center text-white text-xl font-bold shadow-md flex-shrink-0 select-none overflow-hidden">
-                <span className="leading-none flex items-center justify-center text-center">
+              <div className="w-11 h-11 rounded-full bg-primary flex items-center justify-center text-white text-lg font-bold shadow-md flex-shrink-0 select-none overflow-hidden">
+                <span className="leading-none flex items-center justify-center text-center -translate-y-[1px]">
                   {user?.username ? user.username.charAt(0).toUpperCase() : 'A'}
                 </span>
               </div>

@@ -3,7 +3,8 @@ import Artwork from '../common/Artwork'
 import EqualizerBars from './EqualizerBars'
 import AddToPlaylistModal from '../modals/AddToPlaylistModal'
 import { usePlayerStore } from '../../store/usePlayerStore'
-import { showToast } from '../../store/useToastStore'
+import { useAuthStore } from '../../store/useAuthStore'
+import { useUIStore } from '../../store/useUIStore'
 
 function formatDuration(sec) {
   if (!sec || isNaN(sec)) return '0:00'
@@ -24,6 +25,8 @@ export default function TrackTable({
 }) {
   const [playlistModalTrack, setPlaylistModalTrack] = useState(null)
   const { addToQueue } = usePlayerStore()
+  const { user } = useAuthStore()
+  const { openTagEditor } = useUIStore()
 
   if (!tracks || tracks.length === 0) {
     return null
@@ -34,7 +37,6 @@ export default function TrackTable({
       onAddToQueue(track)
     } else {
       addToQueue(track)
-      showToast(`Added "${track.title}" to queue`, 'info', 'queue_music')
     }
   }
 
@@ -60,6 +62,9 @@ export default function TrackTable({
       }
     }
   }
+
+  const canEditTags = Boolean(user?.isAdmin || user?.canEditTags)
+  const canDeleteTrack = Boolean(user?.isAdmin)
 
   return (
     <div className="space-y-3">
@@ -188,19 +193,25 @@ export default function TrackTable({
                         <span className="material-symbols-outlined text-[17px] leading-none">playlist_add</span>
                       </button>
 
-                      {/* Edit Tags */}
-                      <button
-                        type="button"
-                        aria-label="Edit track tags"
-                        title="Edit metadata"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          onEditTags?.(track)
-                        }}
-                        className="w-7 h-7 rounded-md text-on-surface-variant hover:text-primary hover:bg-surface-container flex items-center justify-center transition-colors leading-none"
-                      >
-                        <span className="material-symbols-outlined text-[17px] leading-none">edit_note</span>
-                      </button>
+                      {/* Edit Tags (Admin or canEditTags) */}
+                      {canEditTags && (
+                        <button
+                          type="button"
+                          aria-label="Edit track tags"
+                          title="Edit metadata"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            if (onEditTags) {
+                              onEditTags(track)
+                            } else {
+                              openTagEditor(track)
+                            }
+                          }}
+                          className="w-7 h-7 rounded-md text-on-surface-variant hover:text-primary hover:bg-surface-container flex items-center justify-center transition-colors leading-none"
+                        >
+                          <span className="material-symbols-outlined text-[17px] leading-none">edit_note</span>
+                        </button>
+                      )}
 
                       {/* Favorite */}
                       <button
@@ -222,19 +233,21 @@ export default function TrackTable({
                         </span>
                       </button>
 
-                      {/* Delete Track */}
-                      <button
-                        type="button"
-                        aria-label="Delete track"
-                        title="Delete song file"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleDelete(track)
-                        }}
-                        className="w-7 h-7 rounded-md text-on-surface-variant hover:text-red-400 hover:bg-red-500/10 flex items-center justify-center transition-colors leading-none"
-                      >
-                        <span className="material-symbols-outlined text-[17px] leading-none">delete</span>
-                      </button>
+                      {/* Delete Track (Admin only) */}
+                      {canDeleteTrack && (
+                        <button
+                          type="button"
+                          aria-label="Delete track"
+                          title="Delete song file"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleDelete(track)
+                          }}
+                          className="w-7 h-7 rounded-md text-on-surface-variant hover:text-red-400 hover:bg-red-500/10 flex items-center justify-center transition-colors leading-none"
+                        >
+                          <span className="material-symbols-outlined text-[17px] leading-none">delete</span>
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

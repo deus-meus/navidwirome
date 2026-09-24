@@ -4,6 +4,7 @@ import subsonic from '../api/subsonic'
 import Artwork from '../components/common/Artwork'
 import TrackTable from '../components/dashboard/TrackTable'
 import { usePlayerStore } from '../store/usePlayerStore'
+import { useAuthStore } from '../store/useAuthStore'
 
 function formatTotalDuration(seconds) {
   if (!seconds) return '0 min'
@@ -18,6 +19,7 @@ export default function AlbumDetailView() {
 
   const navigate = useNavigate()
   const { currentTrack, isPlaying, playTrack } = usePlayerStore()
+  const { user } = useAuthStore()
 
   useEffect(() => {
     setLoading(true)
@@ -156,29 +158,31 @@ export default function AlbumDetailView() {
               type="button"
               aria-label="Play All"
               onClick={handlePlayAll}
-              className="px-6 py-2 rounded-full bg-primary text-white font-label-md text-sm font-bold hover:bg-primary-bright transition-all shadow-lg flex items-center gap-2 cursor-pointer"
+              className="px-6 py-2 rounded-xl bg-primary text-white font-label-md text-sm font-bold hover:bg-primary-bright transition-all shadow-lg flex items-center gap-2 cursor-pointer leading-none"
             >
-              <span className="material-symbols-outlined text-[20px] text-white">play_arrow</span>
+              <span className="material-symbols-outlined text-[20px] text-white leading-none">play_arrow</span>
               <span>Play All</span>
             </button>
             <button
               type="button"
               aria-label="Shuffle"
               onClick={handleShuffle}
-              className="px-4 py-2 rounded-full bg-surface-container-high border border-outline-variant text-on-surface hover:bg-surface-container-highest font-label-md text-sm font-medium transition-all flex items-center gap-2 cursor-pointer"
+              className="px-4 py-2 rounded-xl bg-surface-container-high border border-outline-variant text-on-surface hover:bg-surface-container-highest font-label-md text-sm font-medium transition-all flex items-center gap-2 cursor-pointer leading-none"
             >
-              <span className="material-symbols-outlined text-[18px]">shuffle</span>
+              <span className="material-symbols-outlined text-[18px] leading-none">shuffle</span>
               <span>Shuffle</span>
             </button>
-            <button
-              type="button"
-              aria-label="Delete Album"
-              onClick={handleDeleteAlbum}
-              className="px-4 py-2 rounded-full bg-surface-container-high border border-outline-variant text-on-surface hover:text-red-400 hover:border-red-500/30 hover:bg-red-500/10 font-label-md text-sm font-medium transition-all flex items-center gap-2 cursor-pointer"
-            >
-              <span className="material-symbols-outlined text-[18px]">delete</span>
-              <span>Delete Album</span>
-            </button>
+            {user?.isAdmin && (
+              <button
+                type="button"
+                aria-label="Delete Album"
+                onClick={handleDeleteAlbum}
+                className="px-4 py-2 rounded-xl bg-surface-container-high border border-outline-variant text-on-surface hover:text-red-400 hover:border-red-500/30 hover:bg-red-500/10 font-label-md text-sm font-medium transition-all flex items-center gap-2 cursor-pointer leading-none"
+              >
+                <span className="material-symbols-outlined text-[18px] leading-none">delete</span>
+                <span>Delete Album</span>
+              </button>
+            )}
           </div>
         </div>
       </div>

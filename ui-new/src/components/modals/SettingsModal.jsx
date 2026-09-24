@@ -223,8 +223,10 @@ export default function SettingsModal({ isOpen, onClose }) {
             {/* User Profile Card */}
             <div className="p-4 rounded-xl bg-surface-container-low border border-outline-variant flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-full bg-primary flex items-center justify-center text-white text-base font-semibold shadow-md flex-shrink-0 leading-none">
-                  {user?.username ? user.username.charAt(0).toUpperCase() : 'A'}
+                <div className="w-11 h-11 rounded-full bg-primary flex items-center justify-center text-white text-base font-semibold shadow-md flex-shrink-0 leading-none select-none">
+                  <span className="leading-none text-center -translate-y-[0.5px]">
+                    {user?.username ? user.username.charAt(0).toUpperCase() : 'A'}
+                  </span>
                 </div>
                 <div>
                   <h4 className="font-body-md text-sm font-semibold text-on-surface">

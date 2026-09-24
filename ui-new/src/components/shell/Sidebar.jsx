@@ -159,8 +159,10 @@ export default function Sidebar() {
           >
             {/* User Info Header */}
             <div className="px-3 py-2 border-b border-outline-variant/60 flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-semibold flex-shrink-0 leading-none">
-                {user?.username ? user.username.charAt(0).toUpperCase() : 'A'}
+              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-semibold flex-shrink-0 leading-none select-none">
+                <span className="leading-none text-center -translate-y-[0.5px]">
+                  {user?.username ? user.username.charAt(0).toUpperCase() : 'A'}
+                </span>
               </div>
               <div className="min-w-0">
                 <p className="text-xs font-semibold text-on-surface truncate leading-tight">

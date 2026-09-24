@@ -6,7 +6,7 @@ import PlayerBar from './PlayerBar'
 import RightPanel from './RightPanel'
 import SearchModal from '../search/SearchModal'
 import UploadModal from '../modals/UploadModal'
-import TagEditorModal from '../modals/TagEditorModal'
+import EditTagsModal from '../modals/EditTagsModal'
 import SettingsModal from '../modals/SettingsModal'
 import ToastContainer from '../common/ToastContainer'
 import { useUIStore } from '../../store/useUIStore'
@@ -67,11 +67,11 @@ export default function ShellLayout({ children }) {
         onUploadComplete={() => {}}
       />
 
-      <TagEditorModal
+      <EditTagsModal
         isOpen={Boolean(tagEditorTrack)}
         track={tagEditorTrack}
         onClose={closeTagEditor}
-        onSaveTags={() => {
+        onSuccess={() => {
           closeTagEditor()
         }}
       />

@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import AlbumDetailView from './AlbumDetailView'
 import subsonic from '../api/subsonic'
+import { useAuthStore } from '../store/useAuthStore'
 
 describe('AlbumDetailView', () => {
   const mockAlbum = {
@@ -23,6 +24,9 @@ describe('AlbumDetailView', () => {
   beforeEach(() => {
     vi.restoreAllMocks()
     vi.spyOn(subsonic, 'getAlbum').mockResolvedValue(mockAlbum)
+    useAuthStore.setState({
+      user: { id: 'u1', username: 'admin', isAdmin: true },
+    })
   })
 
   it('fetches album details by route id and renders tracks', async () => {
@@ -42,7 +46,7 @@ describe('AlbumDetailView', () => {
     })
   })
 
-  it('renders Play All and Shuffle actions', async () => {
+  it('renders Play All, Shuffle, and Delete actions for admin', async () => {
     render(
       <MemoryRouter initialEntries={['/albums/alb-101']}>
         <Routes>
@@ -55,6 +59,26 @@ describe('AlbumDetailView', () => {
       expect(screen.getByRole('button', { name: /play all/i })).toBeInTheDocument()
       expect(screen.getByRole('button', { name: /shuffle/i })).toBeInTheDocument()
       expect(screen.getByRole('button', { name: /delete album/i })).toBeInTheDocument()
+    })
+  })
+
+  it('hides delete album button for non-admin user', async () => {
+    useAuthStore.setState({
+      user: { id: 'u2', username: 'listener', isAdmin: false },
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/albums/alb-101']}>
+        <Routes>
+          <Route path="/albums/:id" element={<AlbumDetailView />} />
+        </Routes>
+      </MemoryRouter>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /play all/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /shuffle/i })).toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: /delete album/i })).not.toBeInTheDocument()
     })
   })
 
