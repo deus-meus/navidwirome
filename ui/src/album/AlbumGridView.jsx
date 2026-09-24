@@ -25,16 +25,10 @@ import { AlbumDatesField } from './AlbumDatesField.jsx'
 import { Artwork } from '../common/Artwork'
 
 const useStyles = makeStyles(
-  () => ({
+  (theme) => ({
     root: {
       margin: '20px',
       display: 'grid',
-    },
-    gridListTile: {
-      overflow: 'visible !important',
-      '& > div': {
-        overflow: 'visible !important',
-      },
     },
     tileBar: {
       transition: 'all 150ms ease-out',
@@ -42,12 +36,12 @@ const useStyles = makeStyles(
       pointerEvents: 'none',
       textAlign: 'left',
       background:
-        'linear-gradient(to top, rgba(0,0,0,0.85) 0%,rgba(0,0,0,0.4) 70%,rgba(0,0,0,0) 100%)',
+        'linear-gradient(to top, rgba(0,0,0,0.7) 0%,rgba(0,0,0,0.4) 70%,rgba(0,0,0,0) 100%)',
     },
     tileBarMobile: {
       textAlign: 'left',
       background:
-        'linear-gradient(to top, rgba(0,0,0,0.85) 0%,rgba(0,0,0,0.4) 70%,rgba(0,0,0,0) 100%)',
+        'linear-gradient(to top, rgba(0,0,0,0.7) 0%,rgba(0,0,0,0.4) 70%,rgba(0,0,0,0) 100%)',
     },
     albumArtistName: {
       whiteSpace: 'nowrap',
@@ -57,40 +51,33 @@ const useStyles = makeStyles(
       fontSize: '1em',
     },
     albumName: {
-      fontFamily: "'Space Grotesk', sans-serif",
-      fontWeight: 700,
-      fontSize: '13px',
-      color: '#1c1b1b',
+      fontSize: '14px',
+      color: theme.palette.type === 'dark' ? '#eee' : 'black',
       overflow: 'hidden',
       whiteSpace: 'nowrap',
       textOverflow: 'ellipsis',
-      marginTop: '2px',
     },
     missingAlbum: {
       opacity: 0.3,
     },
     albumVersion: {
-      fontFamily: "'Space Mono', monospace",
-      fontSize: '10px',
-      color: '#555',
+      fontSize: '12px',
+      color: theme.palette.type === 'dark' ? '#c5c5c5' : '#696969',
       overflow: 'hidden',
       whiteSpace: 'nowrap',
       textOverflow: 'ellipsis',
     },
     albumSubtitle: {
-      fontFamily: "'Space Mono', monospace",
-      fontSize: '11px',
-      color: '#49454f',
+      fontSize: '12px',
+      color: theme.palette.type === 'dark' ? '#c5c5c5' : '#696969',
       overflow: 'hidden',
       whiteSpace: 'nowrap',
       textOverflow: 'ellipsis',
-      display: 'block',
     },
     link: {
       position: 'relative',
       display: 'block',
       textDecoration: 'none',
-      border: '1px solid #1c1b1b',
       '&:hover $tileBar, &:focus-within $tileBar': {
         opacity: 1,
         pointerEvents: 'auto',
@@ -101,70 +88,7 @@ const useStyles = makeStyles(
       display: 'block',
       textDecoration: 'none',
     },
-    albumContainer: {
-      position: 'relative',
-      backgroundColor: '#ffffff',
-      border: '2px solid #1c1b1b',
-      boxShadow: '3px 3px 0px #1c1b1b',
-      padding: '8px 8px 12px 8px',
-      transition: 'transform 0.15s ease-out, box-shadow 0.15s ease-out',
-      '&:hover': {
-        transform: 'rotate(0deg) scale(1.02) !important',
-        boxShadow: '6px 6px 0px #1c1b1b',
-        zIndex: 10,
-      },
-    },
-    maskingTape: {
-      position: 'absolute',
-      top: -9,
-      left: '50%',
-      transform: 'translateX(-50%) rotate(-1deg)',
-      backgroundColor: 'rgba(244, 239, 230, 0.95)',
-      border: '1px solid rgba(28, 27, 27, 0.25)',
-      padding: '1px 8px',
-      zIndex: 5,
-      boxShadow: '1px 1px 2px rgba(0,0,0,0.1)',
-      userSelect: 'none',
-    },
-    maskingTapeText: {
-      fontFamily: "'Space Mono', monospace",
-      fontSize: '8px',
-      fontWeight: 700,
-      letterSpacing: '0.08em',
-      color: '#1c1b1b',
-      textTransform: 'uppercase',
-    },
-    stampContainer: {
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      gap: '4px',
-      marginTop: '6px',
-      marginBottom: '2px',
-    },
-    yearBadge: {
-      fontFamily: "'Space Mono', monospace",
-      fontSize: '9px',
-      fontWeight: 700,
-      backgroundColor: '#ba1a1a',
-      color: '#ffffff',
-      padding: '1px 4px',
-      letterSpacing: '0.05em',
-      border: '1px solid #1c1b1b',
-    },
-    cutsBadge: {
-      fontFamily: "'Space Mono', monospace",
-      fontSize: '9px',
-      fontWeight: 700,
-      backgroundColor: '#fed01b',
-      color: '#1c1b1b',
-      padding: '1px 4px',
-      letterSpacing: '0.05em',
-      border: '1px solid #1c1b1b',
-    },
-    polaroidMeta: {
-      marginTop: '4px',
-    },
+    albumContainer: {},
     albumPlayButton: { color: 'white' },
   }),
   { name: 'NDAlbumGridView' },
@@ -227,18 +151,7 @@ const Cover = withContentRect('bounds')(({
   )
 })
 
-const getTilt = (id) => {
-  if (!id) return 0
-  let hash = 0
-  const str = String(id)
-  for (let i = 0; i < str.length; i++) {
-    hash = (hash * 31 + str.charCodeAt(i)) % 100
-  }
-  const tilts = [-1.2, 0.8, -0.6, 1.2, -1.0, 1.4, -0.8]
-  return tilts[Math.abs(hash) % tilts.length]
-}
-
-const AlbumGridTile = ({ showArtist, record, basePath }) => {
+const AlbumGridTile = ({ showArtist, record, basePath, ...props }) => {
   const classes = useStyles()
   const isDesktop = useMediaQuery((theme) => theme.breakpoints.up('md'), {
     noSsr: true,
@@ -250,17 +163,8 @@ const AlbumGridTile = ({ showArtist, record, basePath }) => {
     classes.albumContainer,
     record.missing && classes.missingAlbum,
   )
-  const tilt = getTilt(record.id)
-  const tapeLabel = `TAPE NO. ${String(record.id || '001').slice(0, 5)}`
-
   return (
-    <div
-      className={computedClasses}
-      style={{ transform: `rotate(${tilt}deg)` }}
-    >
-      <div className={classes.maskingTape} data-testid="masking-tape">
-        <span className={classes.maskingTapeText}>{tapeLabel}</span>
-      </div>
+    <div className={computedClasses}>
       <Link
         className={classes.link}
         to={linkToRecord(basePath, record.id, 'show')}
@@ -280,34 +184,26 @@ const AlbumGridTile = ({ showArtist, record, basePath }) => {
           actionIcon={<AlbumContextMenu record={record} color={'white'} />}
         />
       </Link>
-      <div className={classes.stampContainer}>
-        <span className={classes.yearBadge}>{record.year || '199X'}</span>
-        <span className={classes.cutsBadge}>
-          {record.songCount ? `${record.songCount} CUTS` : 'LP / STEREO'}
+      <Link
+        className={classes.albumLink}
+        to={linkToRecord(basePath, record.id, 'show')}
+      >
+        <span>
+          <OverflowTooltip title={record.name}>
+            <Typography className={classes.albumName}>{record.name}</Typography>
+          </OverflowTooltip>
+          {record.tags && record.tags['albumversion'] && (
+            <Typography className={classes.albumVersion}>
+              {record.tags['albumversion']}
+            </Typography>
+          )}
         </span>
-      </div>
-      <div className={classes.polaroidMeta}>
-        <Link
-          className={classes.albumLink}
-          to={linkToRecord(basePath, record.id, 'show')}
-        >
-          <span>
-            <OverflowTooltip title={record.name}>
-              <Typography className={classes.albumName}>{record.name}</Typography>
-            </OverflowTooltip>
-            {record.tags && record.tags['albumversion'] && (
-              <Typography className={classes.albumVersion}>
-                {record.tags['albumversion']}
-              </Typography>
-            )}
-          </span>
-        </Link>
-        {showArtist ? (
-          <ArtistLinkField record={record} className={classes.albumSubtitle} />
-        ) : (
-          <AlbumDatesField record={record} className={classes.albumSubtitle} />
-        )}
-      </div>
+      </Link>
+      {showArtist ? (
+        <ArtistLinkField record={record} className={classes.albumSubtitle} />
+      ) : (
+        <AlbumDatesField record={record} className={classes.albumSubtitle} />
+      )}
     </div>
   )
 }
@@ -358,5 +254,4 @@ const AlbumGridView = ({
 
 const AlbumGridViewWithWidth = withWidth()(AlbumGridView)
 
-export { AlbumGridTile, AlbumGridView }
 export default AlbumGridViewWithWidth

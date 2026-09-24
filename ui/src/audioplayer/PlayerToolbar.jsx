@@ -53,33 +53,6 @@ const useStyles = makeStyles((theme) => ({
     display: 'flex',
     alignItems: 'center',
   },
-  tapeCounter: {
-    display: 'inline-flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#ffffff',
-    border: '2px solid #1c1b1b',
-    padding: '1px 6px',
-    marginRight: theme.spacing(1),
-    fontFamily: "'Space Mono', monospace",
-    lineHeight: 1.1,
-    transform: 'rotate(1deg)',
-    boxShadow: '1px 1px 0px #1c1b1b',
-    userSelect: 'none',
-  },
-  tapeCounterLabel: {
-    fontSize: '8px',
-    fontWeight: 700,
-    color: '#ba1a1a',
-    letterSpacing: '0.05em',
-  },
-  tapeCounterDigits: {
-    fontSize: '11px',
-    fontWeight: 700,
-    color: '#1c1b1b',
-    letterSpacing: '0.1em',
-  },
 }))
 
 const PlayerToolbar = ({ id, isRadio }) => {
@@ -103,13 +76,6 @@ const PlayerToolbar = ({ id, isRadio }) => {
 
   const buttonClass = isDesktop ? classes.button : classes.mobileButton
   const listItemClass = isDesktop ? classes.toolbar : classes.mobileListItem
-
-  const tapeCounter = (
-    <div className={classes.tapeCounter}>
-      <span className={classes.tapeCounterLabel}>TAPE COUNTER</span>
-      <span className={classes.tapeCounterDigits}>#0482</span>
-    </div>
-  )
 
   const saveQueueButton = (
     <IconButton
@@ -138,7 +104,6 @@ const PlayerToolbar = ({ id, isRadio }) => {
       <GlobalHotKeys keyMap={keyMap} handlers={handlers} allowChanges />
       {isDesktop ? (
         <li className={`${listItemClass} item`}>
-          {tapeCounter}
           {saveQueueButton}
           {loveButton}
         </li>

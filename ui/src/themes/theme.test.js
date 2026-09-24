@@ -34,16 +34,3 @@ describe('NDAlbumGridView styles', () => {
     },
   )
 })
-
-describe('RiotXeroxTheme tokens', () => {
-  it('exports RiotXeroxTheme with proper 90s underground design tokens', () => {
-    const { RiotXeroxTheme } = themes
-    expect(RiotXeroxTheme).toBeDefined()
-    expect(RiotXeroxTheme.themeName).toBe('Riot Xerox')
-    expect(RiotXeroxTheme.typography.fontFamily).toContain('Space Grotesk')
-    expect(RiotXeroxTheme.overrides.MuiButton.root.borderRadius).toBe(0)
-    expect(RiotXeroxTheme.palette.primary.main).toBe('#1d4ed8')
-    expect(RiotXeroxTheme.palette.background.default).toBe('#fcf9f8')
-  })
-})
-

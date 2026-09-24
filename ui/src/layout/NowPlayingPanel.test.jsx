@@ -63,46 +63,12 @@ describe('<NowPlayingPanel />', () => {
         streamReconnected: 0,
         ...overrides,
       },
-      player: {
-        queue: [
-          {
-            id: '1',
-            name: 'Territorial Pissings',
-            artist: 'Nirvana',
-            duration: 143,
-          },
-          { id: '2', name: 'Drain You', artist: 'Nirvana', duration: 224 },
-        ],
-        current: {
-          id: '1',
-          name: 'Territorial Pissings',
-          artist: 'Nirvana',
-        },
-      },
     }
     return createStore(
-      combineReducers({
-        activity: activityReducer,
-        player: (state = defaultState.player) => state,
-      }),
+      combineReducers({ activity: activityReducer }),
       defaultState,
     )
   }
-
-  it('renders Live Setlist header, Now Blasting card, and queue actions', async () => {
-    const store = createMockStore()
-    render(
-      <Provider store={store}>
-        <NowPlayingPanel open={true} />
-      </Provider>,
-    )
-    expect(
-      screen.getByText(/LIVE SETLIST \/\/ DECK QUEUE/i),
-    ).toBeInTheDocument()
-    expect(screen.getByText(/NOW BLASTING/i)).toBeInTheDocument()
-    expect(screen.getByText(/CLEAR STASH/i)).toBeInTheDocument()
-    expect(screen.getByText(/SHUFFLE REEL/i)).toBeInTheDocument()
-  })
 
   afterEach(() => {
     vi.useRealTimers()

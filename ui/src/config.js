@@ -17,7 +17,7 @@ const defaultConfig = {
   gaTrackingId: '',
   devActivityPanel: true,
   enableStarRating: true,
-  defaultTheme: 'Riot Xerox',
+  defaultTheme: 'Dark',
   defaultLanguage: '',
   defaultUIVolume: 100,
   uiSearchDebounceMs: 200,

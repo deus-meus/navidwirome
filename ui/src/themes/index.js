@@ -15,7 +15,6 @@ import CatppuccinLatteTheme from './catppuccinLatte'
 import DraculaTheme from './dracula'
 import NuclearTheme from './nuclear'
 import NutballTheme from './nutball'
-import RiotXeroxTheme from './riotXerox'
 import RosePineTheme from './rosePine'
 import RosePineDawnTheme from './rosePineDawn'
 import RosePineMoonTheme from './rosePineMoon'
@@ -51,7 +50,6 @@ export default {
   NordTheme,
   NuclearTheme,
   NutballTheme,
-  RiotXeroxTheme,
   RosePineDawnTheme,
   RosePineMoonTheme,
   RosePineTheme,

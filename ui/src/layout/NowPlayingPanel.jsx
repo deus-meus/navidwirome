@@ -19,228 +19,16 @@ import {
   useMediaQuery,
 } from '@material-ui/core'
 import { FaRegCirclePlay, FaPause } from 'react-icons/fa6'
-import clsx from 'clsx'
 import subsonic from '../subsonic'
 import { useInterval } from '../common'
-import { nowPlayingCountSync, clearQueue, shuffleTracks } from '../actions'
+import { nowPlayingCountSync } from '../actions'
 import { formatDuration } from '../utils'
 import config from '../config'
 
 const useStyles = makeStyles((theme) => ({
   button: { color: 'inherit' },
-  card: {
-    padding: 0,
-    borderRadius: 0,
-    border: '2px solid #1c1b1b',
-    boxShadow: '4px 4px 0px #1c1b1b',
-    backgroundColor: '#fcf9f8',
-    width: '28em',
-    maxWidth: '95vw',
-  },
-  cardContent: {
-    padding: `${theme.spacing(1.5)}px !important`,
-  },
-  setlistBanner: {
-    backgroundColor: '#1c1b1b',
-    color: '#fcf9f8',
-    padding: '8px 10px',
-    marginBottom: '8px',
-    border: '1px solid #1c1b1b',
-  },
-  setlistTape: {
-    display: 'inline-block',
-    fontFamily: "'Space Mono', monospace",
-    fontSize: '8px',
-    fontWeight: 700,
-    backgroundColor: 'rgba(244, 239, 230, 0.9)',
-    color: '#1c1b1b',
-    padding: '1px 6px',
-    marginBottom: '4px',
-    letterSpacing: '0.08em',
-  },
-  setlistTitle: {
-    fontFamily: "'Syne', sans-serif",
-    fontSize: '15px',
-    fontWeight: 800,
-    letterSpacing: '-0.02em',
-    margin: 0,
-    textTransform: 'uppercase',
-  },
-  setlistSubtitle: {
-    fontFamily: "'Space Mono', monospace",
-    fontSize: '9px',
-    color: '#fed01b',
-    letterSpacing: '0.08em',
-    margin: 0,
-  },
-  actionRow: {
-    display: 'flex',
-    gap: '8px',
-    margin: '8px 0',
-  },
-  actionButton: {
-    flex: 1,
-    fontFamily: "'Space Mono', monospace",
-    fontSize: '10px',
-    fontWeight: 700,
-    padding: '4px 8px',
-    border: '2px solid #1c1b1b',
-    boxShadow: '2px 2px 0px #1c1b1b',
-    cursor: 'pointer',
-    textTransform: 'uppercase',
-    outline: 'none',
-    '&:hover': {
-      transform: 'translate(1px, 1px)',
-      boxShadow: '1px 1px 0px #1c1b1b',
-    },
-  },
-  clearBtn: {
-    backgroundColor: '#ba1a1a',
-    color: '#ffffff',
-  },
-  shuffleBtn: {
-    backgroundColor: '#fed01b',
-    color: '#1c1b1b',
-  },
-  nowBlastingCard: {
-    backgroundColor: '#1d4ed8',
-    color: '#fcf9f8',
-    border: '2px solid #1c1b1b',
-    boxShadow: '3px 3px 0px #1c1b1b',
-    padding: '8px 10px',
-    marginBottom: '8px',
-  },
-  nowBlastingHeader: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: '6px',
-  },
-  nowBlastingBadge: {
-    fontFamily: "'Space Mono', monospace",
-    fontSize: '9px',
-    fontWeight: 700,
-    backgroundColor: '#fed01b',
-    color: '#1c1b1b',
-    padding: '1px 6px',
-    letterSpacing: '0.05em',
-  },
-  equalizer: {
-    display: 'flex',
-    alignItems: 'flex-end',
-    height: 18,
-    gap: 2,
-  },
-  eqBar: {
-    width: 3,
-    backgroundColor: '#fed01b',
-    display: 'inline-block',
-    animation: '$eq 1s ease-in-out infinite alternate',
-  },
-  eqBar1: { animationDelay: '0.1s' },
-  eqBar2: { animationDelay: '0.4s' },
-  eqBar3: { animationDelay: '0.2s' },
-  eqBar4: { animationDelay: '0.5s' },
-  eqBar5: { animationDelay: '0.3s' },
-  '@keyframes eq': {
-    '0%': { height: 4 },
-    '50%': { height: 18 },
-    '100%': { height: 6 },
-  },
-  nowBlastingTitle: {
-    fontFamily: "'Space Grotesk', sans-serif",
-    fontSize: '13px',
-    fontWeight: 700,
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
-  },
-  nowBlastingArtist: {
-    fontFamily: "'Space Mono', monospace",
-    fontSize: '10px',
-    opacity: 0.9,
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
-  },
-  queueContainer: {
-    border: '1px solid #1c1b1b',
-    backgroundColor: '#ffffff',
-    padding: '6px',
-    maxHeight: '120px',
-    overflowY: 'auto',
-    marginBottom: '8px',
-  },
-  queueHeader: {
-    fontFamily: "'Space Mono', monospace",
-    fontSize: '9px',
-    fontWeight: 700,
-    color: '#3b4957',
-    borderBottom: '1px solid #eee',
-    paddingBottom: '3px',
-    marginBottom: '4px',
-    textTransform: 'uppercase',
-  },
-  queueRow: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    fontFamily: "'Space Mono', monospace",
-    fontSize: '10px',
-    padding: '2px 0',
-    borderBottom: '1px dashed #e5e5e5',
-  },
-  queuePrefix: {
-    fontWeight: 700,
-    color: '#1d4ed8',
-    marginRight: '6px',
-  },
-  queueName: {
-    flex: 1,
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
-  },
-  queueDuration: {
-    color: '#666',
-    marginLeft: '6px',
-  },
-  emptyQueue: {
-    fontFamily: "'Space Mono', monospace",
-    fontSize: '10px',
-    color: '#888',
-    textAlign: 'center',
-    padding: '6px 0',
-  },
-  cacheStats: {
-    backgroundColor: '#006577',
-    color: '#fcf9f8',
-    padding: '4px 8px',
-    fontFamily: "'Space Mono', monospace",
-    fontSize: '8px',
-    border: '1px solid #1c1b1b',
-    marginBottom: '8px',
-  },
-  cacheStatsLine: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    fontWeight: 700,
-  },
-  streamsDivider: {
-    margin: '8px 0 6px 0',
-    borderTop: '1px solid #1c1b1b',
-  },
-  streamsLabel: {
-    fontFamily: "'Space Mono', monospace",
-    fontSize: '9px',
-    fontWeight: 700,
-    textTransform: 'uppercase',
-    color: '#1c1b1b',
-    marginBottom: '4px',
-    display: 'block',
-  },
   list: {
-    width: '100%',
+    width: '26em',
     maxHeight: (props) => {
       const entryHeight = 120
       const maxEntries = Math.min(props.entryCount || 0, 3)
@@ -248,6 +36,15 @@ const useStyles = makeStyles((theme) => ({
     },
     overflowY: 'auto',
     padding: 0,
+  },
+  card: {
+    padding: 0,
+  },
+  cardContent: {
+    padding: `${theme.spacing(1)}px !important`,
+    '&:last-child': {
+      paddingBottom: `${theme.spacing(1)}px !important`,
+    },
   },
   listItem: {
     display: 'flex',
@@ -509,26 +306,6 @@ const NowPlayingList = React.memo(
   ({ anchorEl, open, onClose, entries, onLinkClick, getArtistLink, now }) => {
     const classes = useStyles({ entryCount: entries.length })
     const translate = useTranslate()
-    const dispatch = useDispatch()
-    const queue = useSelector((state) => state.player?.queue || [])
-    const currentTrack = useSelector((state) => state.player?.current || {})
-
-    const handleClear = () => {
-      dispatch(clearQueue())
-    }
-
-    const handleShuffle = () => {
-      if (queue && queue.length > 0) {
-        const queueObj = {}
-        const ids = []
-        queue.forEach((item, idx) => {
-          const id = item.id || `track_${idx}`
-          queueObj[id] = item
-          ids.push(id)
-        })
-        dispatch(shuffleTracks(queueObj, ids))
-      }
-    }
 
     return (
       <Popover
@@ -542,96 +319,8 @@ const NowPlayingList = React.memo(
       >
         <Card className={classes.card}>
           <CardContent className={classes.cardContent}>
-            <div className={classes.setlistBanner}>
-              <span className={classes.setlistTape}>STAGE RIG // CHANNEL 1</span>
-              <h3 className={classes.setlistTitle}>LIVE SETLIST // DECK QUEUE</h3>
-              <p className={classes.setlistSubtitle}>
-                SHOWBOX SEATTLE // OCT 23, 1993
-              </p>
-            </div>
-
-            <div className={classes.nowBlastingCard}>
-              <div className={classes.nowBlastingHeader}>
-                <span className={classes.nowBlastingBadge}>NOW BLASTING</span>
-                <div className={classes.equalizer}>
-                  <span className={clsx(classes.eqBar, classes.eqBar1)} />
-                  <span className={clsx(classes.eqBar, classes.eqBar2)} />
-                  <span className={clsx(classes.eqBar, classes.eqBar3)} />
-                  <span className={clsx(classes.eqBar, classes.eqBar4)} />
-                  <span className={clsx(classes.eqBar, classes.eqBar5)} />
-                </div>
-              </div>
-              <div className={classes.nowBlastingTitle}>
-                {currentTrack?.name || currentTrack?.title || 'NO TRACK LOADED'}
-              </div>
-              <div className={classes.nowBlastingArtist}>
-                {currentTrack?.artist || 'UNKNOWN ARTIST'}
-              </div>
-            </div>
-
-            <div className={classes.actionRow}>
-              <button
-                type="button"
-                className={clsx(classes.actionButton, classes.clearBtn)}
-                onClick={handleClear}
-              >
-                CLEAR STASH
-              </button>
-              <button
-                type="button"
-                className={clsx(classes.actionButton, classes.shuffleBtn)}
-                onClick={handleShuffle}
-              >
-                SHUFFLE REEL
-              </button>
-            </div>
-
-            <div className={classes.queueContainer}>
-              <div className={classes.queueHeader}>
-                REEL QUEUE ({queue.length} CUTS)
-              </div>
-              {queue.length === 0 ? (
-                <div className={classes.emptyQueue}>
-                  SETLIST EMPTY // ADD CUTS FROM CRATE
-                </div>
-              ) : (
-                queue.map((item, idx) => (
-                  <div key={item.id || idx} className={classes.queueRow}>
-                    <span className={classes.queuePrefix}>
-                      {String(idx + 1).padStart(2, '0')}.
-                    </span>
-                    <span className={classes.queueName}>
-                      {item.name || item.title || 'Untitled'} - {item.artist}
-                    </span>
-                    <span className={classes.queueDuration}>
-                      {item.duration ? formatDuration(item.duration) : ''}
-                    </span>
-                  </div>
-                ))
-              )}
-            </div>
-
-            <div className={classes.cacheStats}>
-              <div className={classes.cacheStatsLine}>
-                <span>LOCAL CASSETTE CACHE</span>
-                <span>48.2 GB / 120 GB (40% BUFFERED)</span>
-              </div>
-              <div className={classes.cacheStatsLine}>
-                <span>BUFFER LATENCY: 12ms</span>
-                <span>DIRECT FLAC STREAM</span>
-              </div>
-            </div>
-
-            <div className={classes.streamsDivider} />
-            <span className={classes.streamsLabel}>
-              ACTIVE NETWORK STREAMS ({entries.length})
-            </span>
-
             {entries.length === 0 ? (
-              <Typography
-                id="now-playing-title"
-                style={{ fontSize: '11px', color: '#666' }}
-              >
+              <Typography id="now-playing-title">
                 {translate('nowPlaying.empty')}
               </Typography>
             ) : (
@@ -671,7 +360,7 @@ NowPlayingList.propTypes = {
 }
 
 // Main NowPlayingPanel component
-const NowPlayingPanel = ({ open: propOpen }) => {
+const NowPlayingPanel = () => {
   const dispatch = useDispatch()
   const count = useSelector((state) => state.activity.nowPlayingCount)
   const lastUpdate = useSelector((state) => state.activity.nowPlayingLastUpdate)
@@ -681,15 +370,15 @@ const NowPlayingPanel = ({ open: propOpen }) => {
   const serverUp = useSelector(
     (state) => !!state.activity.serverStart.startTime,
   )
+  const translate = useTranslate()
   const notify = useNotify()
   const theme = useTheme()
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'))
 
   const [anchorEl, setAnchorEl] = useState(null)
-  const buttonRef = useRef(null)
   const [entries, setEntries] = useState([])
   const [now, setNow] = useState(Date.now())
-  const open = propOpen !== undefined ? propOpen : Boolean(anchorEl)
+  const open = Boolean(anchorEl)
 
   const handleMenuOpen = useCallback((event) => {
     setAnchorEl(event.currentTarget)
@@ -783,15 +472,9 @@ const NowPlayingPanel = ({ open: propOpen }) => {
 
   return (
     <div>
-      <div ref={buttonRef} style={{ display: 'inline-block' }}>
-        <NowPlayingButton count={count} onClick={handleMenuOpen} />
-      </div>
+      <NowPlayingButton count={count} onClick={handleMenuOpen} />
       <NowPlayingList
-        anchorEl={
-          anchorEl ||
-          buttonRef.current ||
-          (typeof document !== 'undefined' ? document.body : null)
-        }
+        anchorEl={anchorEl}
         open={open}
         onClose={handleMenuClose}
         entries={entries}
