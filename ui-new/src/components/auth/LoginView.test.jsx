@@ -14,11 +14,11 @@ describe('LoginView', () => {
       error: null,
     })
 
-    render(<LoginView />)
+    const { container } = render(<LoginView />)
 
     fireEvent.change(screen.getByPlaceholderText('Username'), { target: { value: 'audiophile' } })
     fireEvent.change(screen.getByPlaceholderText('••••••••'), { target: { value: 'secret' } })
-    fireEvent.click(screen.getByRole('button', { type: 'submit' }))
+    fireEvent.click(container.querySelector('button[type="submit"]'))
 
     expect(loginMock).toHaveBeenCalledWith('audiophile', 'secret')
   })

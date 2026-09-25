@@ -65,7 +65,7 @@ export default function HeroMaster({
           <div className="flex flex-wrap items-center justify-start gap-2.5 sm:gap-3 pt-1 w-full">
             <button
               onClick={() => onPlayMaster?.(album)}
-              className="flex-1 sm:flex-initial px-5 py-2.5 rounded-xl bg-primary text-white font-label-md text-xs sm:text-sm font-bold hover:bg-primary-bright transition-all shadow-xl hover:scale-105 flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap flex-shrink-0 leading-none"
+              className="flex-1 sm:flex-initial px-5 sm:px-6 py-2.5 rounded-xl bg-primary text-white font-label-md text-xs sm:text-sm font-bold hover:bg-primary-bright transition-all shadow-xl hover:scale-105 flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap flex-shrink-0 leading-none"
               type="button"
             >
               <span className="material-symbols-outlined text-[18px] sm:text-[20px] text-white leading-none">play_arrow</span>
@@ -74,7 +74,7 @@ export default function HeroMaster({
 
             <button
               onClick={() => (onAddToQueue ? onAddToQueue(album) : onAddToLibrary?.(album))}
-              className="flex-1 sm:flex-initial px-4.5 py-2.5 rounded-xl bg-surface-container-high border border-outline-variant text-on-surface hover:bg-surface-container-highest hover:text-primary font-label-md text-xs sm:text-sm font-medium transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm whitespace-nowrap flex-shrink-0 leading-none"
+              className="flex-1 sm:flex-initial px-5 sm:px-6 py-2.5 rounded-xl bg-surface-container-high border border-outline-variant text-on-surface hover:bg-surface-container-highest hover:text-primary font-label-md text-xs sm:text-sm font-medium transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm whitespace-nowrap flex-shrink-0 leading-none"
               type="button"
             >
               <span className="material-symbols-outlined text-[17px] sm:text-[19px] leading-none">queue_music</span>
