@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
+import { nativeMusicApi } from '../../api/nativeMusicApi'
+import { showToast } from '../../store/useToastStore'
 
 function formatBytes(bytes) {
   if (!bytes) return '0 B'
@@ -63,45 +65,56 @@ export default function UploadModal({ isOpen, onClose, onUploadComplete }) {
   }
 
   const handleCommitUpload = async () => {
-    if (files.length === 0) return
+    if (files.length === 0 || uploading) return
     setUploading(true)
-    setProgress(10)
+    setProgress(0)
 
-    try {
-      const formData = new FormData()
-      files.forEach((item) => {
-        formData.append('files', item.file)
-      })
+    let successCount = 0
+    let failureCount = 0
+    const total = files.length
 
-      // Simulate step progress
-      const timer = setInterval(() => {
-        setProgress((p) => {
-          if (p >= 90) {
-            clearInterval(timer)
-            return 90
-          }
-          return p + 25
-        })
-      }, 150)
+    for (let i = 0; i < total; i++) {
+      const item = files[i]
+      setFiles((prev) =>
+        prev.map((f, idx) => (idx === i ? { ...f, status: 'uploading' } : f))
+      )
 
-      // Submit to Navidwirome /api/music/upload
-      const res = await fetch('/api/music/upload', {
-        method: 'POST',
-        body: formData,
-      }).catch(() => null)
+      try {
+        await nativeMusicApi.uploadMusicFile(item.file)
+        successCount++
+        setFiles((prev) =>
+          prev.map((f, idx) => (idx === i ? { ...f, status: 'done' } : f))
+        )
+      } catch (err) {
+        failureCount++
+        setFiles((prev) =>
+          prev.map((f, idx) =>
+            idx === i ? { ...f, status: 'error', error: err.message || 'Upload failed' } : f
+          )
+        )
+      }
 
-      clearInterval(timer)
-      setProgress(100)
-      setUploading(false)
+      const currentProgress = Math.round(((i + 1) / total) * 100)
+      setProgress(currentProgress)
+    }
 
+    setUploading(false)
+
+    if (failureCount === 0) {
+      showToast(
+        `Successfully uploaded ${successCount} audio track${successCount > 1 ? 's' : ''}`,
+        'success',
+        'cloud_done'
+      )
       setTimeout(() => {
-        onUploadComplete?.(res)
+        onUploadComplete?.()
         onClose()
-      }, 400)
-    } catch {
-      setProgress(100)
-      setUploading(false)
-      setTimeout(onClose, 400)
+      }, 500)
+    } else if (successCount > 0) {
+      showToast(`Uploaded ${successCount} track(s), but ${failureCount} failed`, 'warning', 'warning')
+      onUploadComplete?.()
+    } else {
+      showToast('Failed to upload audio files', 'error', 'error')
     }
   }
 
@@ -186,20 +199,59 @@ export default function UploadModal({ isOpen, onClose, onUploadComplete }) {
               >
                 <div className="flex items-center gap-2.5 min-w-0">
                   <span className="material-symbols-outlined text-primary text-[20px]">
-                    {uploading ? (progress === 100 ? 'check_circle' : 'sync') : 'audiotrack'}
+                    {item.status === 'done'
+                      ? 'check_circle'
+                      : item.status === 'uploading'
+                      ? 'sync'
+                      : item.status === 'error'
+                      ? 'error'
+                      : 'audiotrack'}
                   </span>
                   <div className="truncate">
                     <p className="text-xs font-medium text-on-surface truncate">{item.name}</p>
                     <p className="font-mono text-[10px] text-on-surface-variant">
-                      {formatBytes(item.size)} • Ready to Upload
+                      {formatBytes(item.size)} •{' '}
+                      {item.status === 'done'
+                        ? 'Uploaded'
+                        : item.status === 'uploading'
+                        ? 'Uploading...'
+                        : item.status === 'error'
+                        ? item.error || 'Failed'
+                        : 'Ready to Upload'}
                     </p>
                   </div>
                 </div>
-                <span className="font-mono text-xs text-primary font-semibold px-2 py-0.5 rounded bg-primary/15 border border-primary/20">
-                  {uploading ? `${progress}%` : 'Ready'}
+                <span
+                  className={`font-mono text-xs font-semibold px-2 py-0.5 rounded border ${
+                    item.status === 'done'
+                      ? 'text-emerald-400 bg-emerald-500/15 border-emerald-500/20'
+                      : item.status === 'error'
+                      ? 'text-red-400 bg-red-500/15 border-red-500/20'
+                      : item.status === 'uploading'
+                      ? 'text-primary bg-primary/15 border-primary/20 animate-pulse'
+                      : 'text-primary bg-primary/15 border-primary/20'
+                  }`}
+                >
+                  {item.status === 'done'
+                    ? 'Done'
+                    : item.status === 'error'
+                    ? 'Error'
+                    : item.status === 'uploading'
+                    ? 'Uploading'
+                    : 'Ready'}
                 </span>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Upload Progress Bar */}
+        {uploading && (
+          <div className="w-full bg-surface-container rounded-full h-1.5 overflow-hidden">
+            <div
+              className="bg-primary h-full transition-all duration-300"
+              style={{ width: `${progress}%` }}
+            />
           </div>
         )}
 
@@ -227,7 +279,7 @@ export default function UploadModal({ isOpen, onClose, onUploadComplete }) {
                   : 'bg-primary text-white hover:bg-primary-bright'
               }`}
             >
-              {uploading ? 'Processing...' : 'Commit to Library'}
+              {uploading ? `Uploading (${progress}%)...` : 'Commit to Library'}
             </button>
           </div>
         </div>

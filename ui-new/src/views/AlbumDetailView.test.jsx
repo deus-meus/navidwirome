@@ -4,6 +4,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import AlbumDetailView from './AlbumDetailView'
 import subsonic from '../api/subsonic'
 import { useAuthStore } from '../store/useAuthStore'
+import { useConfirmStore } from '../store/useConfirmStore'
 
 describe('AlbumDetailView', () => {
   const mockAlbum = {
@@ -83,7 +84,6 @@ describe('AlbumDetailView', () => {
   })
 
   it('triggers delete album with confirmation', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
     global.fetch = vi.fn().mockResolvedValue({ ok: true })
 
     render(
@@ -101,7 +101,13 @@ describe('AlbumDetailView', () => {
     const deleteBtn = screen.getByRole('button', { name: /delete album/i })
     deleteBtn.click()
 
-    expect(window.confirm).toHaveBeenCalled()
-    expect(global.fetch).toHaveBeenCalledWith('/api/music/album/alb-101', { method: 'DELETE' })
+    expect(useConfirmStore.getState().isOpen).toBe(true)
+    expect(useConfirmStore.getState().title).toBe('Delete Album')
+
+    useConfirmStore.getState().handleConfirm()
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith('/api/music/album/alb-101', { method: 'DELETE' })
+    })
   })
 })

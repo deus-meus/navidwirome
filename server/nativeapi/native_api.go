@@ -92,6 +92,7 @@ func (api *Router) routes() http.Handler {
 		api.addInsightsRoute(r)
 		api.addQuickConnectRoute(r)
 		api.addMusicMutationRoute(r)
+		r.Get("/me", api.handleGetCurrentUser)
 
 		r.With(adminOnlyMiddleware).Group(func(r chi.Router) {
 			api.addInspectRoute(r)
@@ -261,6 +262,27 @@ func (api *Router) addInsightsRoute(r chi.Router) {
 			_, _ = w.Write([]byte(`{"id":"insights_status", "lastRun":"disabled", "success":false}`))
 		}
 	})
+}
+
+func (api *Router) handleGetCurrentUser(w http.ResponseWriter, r *http.Request) {
+	user, ok := request.UserFrom(r.Context())
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	payload := map[string]any{
+		"id":          user.ID,
+		"username":    user.UserName,
+		"name":        user.Name,
+		"email":       user.Email,
+		"isAdmin":     user.IsAdmin,
+		"canUpload":   user.AllowedToUpload(),
+		"canEditTags": user.AllowedToEditTags(),
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(payload)
 }
 
 // Middleware to ensure only admin users can access endpoints

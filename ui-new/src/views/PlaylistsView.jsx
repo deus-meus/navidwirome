@@ -6,6 +6,8 @@ import CreatePlaylistModal from '../components/modals/CreatePlaylistModal'
 import RenamePlaylistModal from '../components/modals/RenamePlaylistModal'
 import { usePlayerStore } from '../store/usePlayerStore'
 import { usePlaylistStore } from '../store/usePlaylistStore'
+import { useAuthStore } from '../store/useAuthStore'
+import { showConfirm } from '../store/useConfirmStore'
 
 function formatDuration(seconds) {
   if (!seconds) return '0 min'
@@ -23,6 +25,8 @@ export default function PlaylistsView() {
   const navigate = useNavigate()
   const { playTrack } = usePlayerStore()
   const { playlists, loading, fetchPlaylists, deletePlaylist } = usePlaylistStore()
+  const { user } = useAuthStore()
+  const currentUsername = (user?.username || user?.userName || '').toLowerCase()
 
   useEffect(() => {
     fetchPlaylists()
@@ -43,11 +47,13 @@ export default function PlaylistsView() {
 
   const handleDeletePlaylist = async (pl, e) => {
     e?.stopPropagation()
-    if (
-      !window.confirm(
-        `Are you sure you want to delete playlist "${pl.name}"? This cannot be undone.`
-      )
-    ) {
+    const confirmed = await showConfirm({
+      title: 'Delete Playlist',
+      message: `Are you sure you want to delete playlist "${pl.name}"? This cannot be undone.`,
+      confirmText: 'Delete Playlist',
+      danger: true,
+    })
+    if (!confirmed) {
       return
     }
     await deletePlaylist(pl.id, pl.name)
@@ -133,65 +139,74 @@ export default function PlaylistsView() {
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          {filtered.map((pl) => (
-            <div
-              key={pl.id}
-              onClick={() => navigate(`/playlists/${pl.id}`)}
-              className="group relative flex flex-col gap-2 p-2.5 rounded-2xl bg-surface-container-low border border-outline-variant hover:bg-surface-container hover:border-primary/40 transition-all cursor-pointer shadow-sm hover:shadow-lg"
-            >
-              <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-surface-container-high shadow-md">
-                <Artwork
-                  record={{ ...pl, sync: true }}
-                  size={300}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
+          {filtered.map((pl) => {
+            const isOwner = Boolean(
+              currentUsername && pl.owner && currentUsername === pl.owner.toLowerCase()
+            )
+            const canManage = isOwner
 
-                {/* Overlay Action Buttons on Hover */}
-                <div className="absolute top-2 right-2 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+            return (
+              <div
+                key={pl.id}
+                onClick={() => navigate(`/playlists/${pl.id}`)}
+                className="group relative flex flex-col gap-2 p-2.5 rounded-2xl bg-surface-container-low border border-outline-variant hover:bg-surface-container hover:border-primary/40 transition-all cursor-pointer shadow-sm hover:shadow-lg"
+              >
+                <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-surface-container-high shadow-md">
+                  <Artwork
+                    record={{ ...pl, sync: true }}
+                    size={300}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+
+                  {/* Overlay Action Buttons on Hover */}
+                  {canManage && (
+                    <div className="absolute top-2 right-2 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        type="button"
+                        title="Rename playlist"
+                        aria-label={`Rename ${pl.name}`}
+                        onClick={(e) => handleRenamePlaylist(pl, e)}
+                        className="w-7 h-7 rounded-lg bg-black/60 backdrop-blur-md border border-white/10 text-white hover:text-primary hover:bg-black/80 flex items-center justify-center transition-all cursor-pointer leading-none"
+                      >
+                        <span className="material-symbols-outlined text-[15px] leading-none">edit</span>
+                      </button>
+                      <button
+                        type="button"
+                        title="Delete playlist"
+                        aria-label={`Delete ${pl.name}`}
+                        onClick={(e) => handleDeletePlaylist(pl, e)}
+                        className="w-7 h-7 rounded-lg bg-black/60 backdrop-blur-md border border-white/10 text-white hover:text-red-400 hover:bg-black/80 flex items-center justify-center transition-all cursor-pointer leading-none"
+                      >
+                        <span className="material-symbols-outlined text-[15px] leading-none">delete</span>
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Play Button */}
                   <button
                     type="button"
-                    title="Rename playlist"
-                    aria-label={`Rename ${pl.name}`}
-                    onClick={(e) => handleRenamePlaylist(pl, e)}
-                    className="w-7 h-7 rounded-lg bg-black/60 backdrop-blur-md border border-white/10 text-white hover:text-primary hover:bg-black/80 flex items-center justify-center transition-all cursor-pointer leading-none"
+                    title="Play playlist"
+                    aria-label={`Play ${pl.name}`}
+                    onClick={(e) => handlePlayPlaylist(pl, e)}
+                    className="absolute bottom-2.5 right-2.5 w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-xl hover:scale-105 cursor-pointer leading-none"
                   >
-                    <span className="material-symbols-outlined text-[15px] leading-none">edit</span>
-                  </button>
-                  <button
-                    type="button"
-                    title="Delete playlist"
-                    aria-label={`Delete ${pl.name}`}
-                    onClick={(e) => handleDeletePlaylist(pl, e)}
-                    className="w-7 h-7 rounded-lg bg-black/60 backdrop-blur-md border border-white/10 text-white hover:text-red-400 hover:bg-black/80 flex items-center justify-center transition-all cursor-pointer leading-none"
-                  >
-                    <span className="material-symbols-outlined text-[15px] leading-none">delete</span>
+                    <span className="material-symbols-outlined text-[22px] leading-none">play_arrow</span>
                   </button>
                 </div>
 
-                {/* Play Button */}
-                <button
-                  type="button"
-                  title="Play playlist"
-                  aria-label={`Play ${pl.name}`}
-                  onClick={(e) => handlePlayPlaylist(pl, e)}
-                  className="absolute bottom-2.5 right-2.5 w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-xl hover:scale-105 cursor-pointer leading-none"
-                >
-                  <span className="material-symbols-outlined text-[22px] leading-none">play_arrow</span>
-                </button>
-              </div>
-
-              <div className="space-y-0.5 pt-1 px-1">
-                <h3 className="font-body-md text-xs font-semibold text-on-surface truncate group-hover:text-primary transition-colors">
-                  {pl.name}
-                </h3>
-                <div className="flex items-center gap-1.5 font-mono text-[10px] text-on-surface-variant/70 pt-0.5">
-                  <span>{pl.songCount || 0} tracks</span>
-                  <span>•</span>
-                  <span>{formatDuration(pl.duration)}</span>
+                <div className="space-y-0.5 pt-1 px-1">
+                  <h3 className="font-body-md text-xs font-semibold text-on-surface truncate group-hover:text-primary transition-colors">
+                    {pl.name}
+                  </h3>
+                  <div className="flex items-center gap-1.5 font-mono text-[10px] text-on-surface-variant/70 pt-0.5">
+                    <span>{pl.songCount || 0} tracks</span>
+                    <span>•</span>
+                    <span>{formatDuration(pl.duration)}</span>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
 

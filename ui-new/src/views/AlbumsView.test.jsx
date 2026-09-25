@@ -25,6 +25,7 @@ describe('AlbumsView', () => {
     expect(screen.getByText(/Albums Catalog/i)).toBeInTheDocument()
 
     await waitFor(() => {
+      expect(subsonic.getAlbumList2).toHaveBeenCalledWith('newest', 50)
       expect(screen.getByText('Kid A')).toBeInTheDocument()
       expect(screen.getByText('In Rainbows')).toBeInTheDocument()
     })
@@ -37,8 +38,8 @@ describe('AlbumsView', () => {
       </MemoryRouter>
     )
 
-    const frequentTab = screen.getByRole('button', { name: /frequent/i })
-    fireEvent.click(frequentTab)
+    const mostPlayedTab = screen.getByRole('button', { name: /most played/i })
+    fireEvent.click(mostPlayedTab)
 
     await waitFor(() => {
       expect(subsonic.getAlbumList2).toHaveBeenCalledWith('frequent', expect.any(Number))

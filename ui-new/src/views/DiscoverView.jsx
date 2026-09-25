@@ -22,7 +22,7 @@ export default function DiscoverView() {
     let isMounted = true
 
     Promise.all([
-      subsonic.getAlbumList2('recent', 12).catch(() => []),
+      subsonic.getAlbumList2('newest', 16).catch(() => []),
       subsonic.getRandomSongs(10).catch(() => []),
     ])
       .then(([albumList, songList]) => {
@@ -152,14 +152,14 @@ export default function DiscoverView() {
   return (
     <div className="space-y-8">
       {/* Top Filter Row */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1">
+      <div className="flex items-center gap-2 overflow-x-auto py-1.5 px-0.5 no-scrollbar scrollbar-none">
         <button
           type="button"
           onClick={() => setActiveFilter('all')}
-          className={`px-4 py-1.5 rounded-xl font-semibold text-xs transition-all cursor-pointer ${
+          className={`px-3.5 py-1.5 rounded-lg font-semibold text-xs transition-all cursor-pointer border whitespace-nowrap flex-shrink-0 focus:outline-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/40 ${
             activeFilter === 'all'
-              ? 'bg-on-surface text-background'
-              : 'bg-surface-container-low border border-outline-variant text-on-surface-variant hover:text-on-surface'
+              ? 'bg-on-surface text-background border-on-surface'
+              : 'bg-surface-container-low border-outline-variant text-on-surface-variant hover:text-on-surface'
           }`}
         >
           All
@@ -167,24 +167,24 @@ export default function DiscoverView() {
         <button
           type="button"
           onClick={() => navigate('/albums')}
-          className="px-4 py-1.5 rounded-xl bg-surface-container-low border border-outline-variant text-on-surface-variant hover:text-on-surface text-xs transition-all cursor-pointer"
+          className="px-3.5 py-1.5 rounded-lg bg-surface-container-low border border-outline-variant text-on-surface-variant hover:text-on-surface text-xs transition-all cursor-pointer whitespace-nowrap flex-shrink-0 focus:outline-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/40"
         >
           Albums
         </button>
         <button
           type="button"
           onClick={() => navigate('/playlists')}
-          className="px-4 py-1.5 rounded-xl bg-surface-container-low border border-outline-variant text-on-surface-variant hover:text-on-surface text-xs transition-all cursor-pointer"
+          className="px-3.5 py-1.5 rounded-lg bg-surface-container-low border border-outline-variant text-on-surface-variant hover:text-on-surface text-xs transition-all cursor-pointer whitespace-nowrap flex-shrink-0 focus:outline-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/40"
         >
           Playlists
         </button>
         <button
           type="button"
           onClick={() => setActiveFilter(activeFilter === 'hires' ? 'all' : 'hires')}
-          className={`px-4 py-1.5 rounded-xl border border-outline-variant text-xs transition-all flex items-center gap-1.5 cursor-pointer ${
+          className={`px-3.5 py-1.5 rounded-lg border text-xs transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap flex-shrink-0 focus:outline-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/40 ${
             activeFilter === 'hires'
               ? 'bg-primary text-white border-primary font-semibold'
-              : 'bg-surface-container-low text-on-surface-variant hover:text-on-surface'
+              : 'bg-surface-container-low border-outline-variant text-on-surface-variant hover:text-on-surface'
           }`}
         >
           <span className="w-1.5 h-1.5 rounded-full bg-primary" /> Hi-Res Masters

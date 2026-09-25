@@ -98,30 +98,46 @@ class SubsonicClient {
 
   getCoverArtUrl(record, size = 300, square = true) {
     if (!record) return ''
+    const extraParams = {}
+    if (record._t) {
+      extraParams._t = record._t
+    }
+
+    let id = ''
     if (typeof record === 'string') {
-      const id = record.includes('-') ? record : `al-${record}`
-      return this.buildUrl('getCoverArt', { id, size, square })
+      id = record.includes('-') ? record : `al-${record}`
+    } else if (record.coverArt) {
+      id = String(record.coverArt).includes('-') ? String(record.coverArt) : `al-${record.coverArt}`
+    } else if (record.id) {
+      id = record.id
+      if (record.albumId) {
+        id = `al-${record.albumId}`
+      } else if (record.album && !record.songCount) {
+        id = `mf-${record.id}`
+      } else if (record.albumArtist || record.songCount !== undefined || (record.name && record.artist && !record.title)) {
+        id = `al-${record.id}`
+      } else if (record.sync !== undefined) {
+        id = `pl-${record.id}`
+      } else if (record.title && record.artist) {
+        id = `mf-${record.id}`
+      } else {
+        id = `ar-${record.id}`
+      }
     }
-    if (record.coverArt) {
-      const id = String(record.coverArt).includes('-') ? record.coverArt : `al-${record.coverArt}`
-      return this.buildUrl('getCoverArt', { id, size, square })
+
+    if (!id) return ''
+
+    // Sanitize any accidental query parameters embedded in the id (e.g. "pl-xxx&_t=yyy")
+    if (id.includes('&')) {
+      const parts = id.split('&')
+      id = parts[0]
+      parts.slice(1).forEach((param) => {
+        const [k, v] = param.split('=')
+        if (k && v) extraParams[k] = v
+      })
     }
-    if (!record.id) return ''
-    let id = record.id
-    if (record.albumId) {
-      id = `al-${record.albumId}`
-    } else if (record.album && !record.songCount) {
-      id = `mf-${record.id}`
-    } else if (record.albumArtist || record.songCount !== undefined || (record.name && record.artist && !record.title)) {
-      id = `al-${record.id}`
-    } else if (record.sync !== undefined) {
-      id = `pl-${record.id}`
-    } else if (record.title && record.artist) {
-      id = `mf-${record.id}`
-    } else {
-      id = `ar-${record.id}`
-    }
-    return this.buildUrl('getCoverArt', { id, size, square })
+
+    return this.buildUrl('getCoverArt', { id, size, square, ...extraParams })
   }
 
   async getPlaylists() {
@@ -150,6 +166,14 @@ class SubsonicClient {
 
   async updatePlaylistName(id, name) {
     const res = await this.request('updatePlaylist', { playlistId: id, name })
+    return res?.status === 'ok'
+  }
+
+  async updatePlaylistPublic(id, isPublic) {
+    const res = await this.request('updatePlaylist', {
+      playlistId: id,
+      public: Boolean(isPublic),
+    })
     return res?.status === 'ok'
   }
 

@@ -5,6 +5,8 @@ import Artwork from '../components/common/Artwork'
 import TrackTable from '../components/dashboard/TrackTable'
 import { usePlayerStore } from '../store/usePlayerStore'
 import { useAuthStore } from '../store/useAuthStore'
+import { showConfirm } from '../store/useConfirmStore'
+import { showToast } from '../store/useToastStore'
 
 function formatTotalDuration(seconds) {
   if (!seconds) return '0 min'
@@ -67,11 +69,13 @@ export default function AlbumDetailView() {
   }
 
   const handleDeleteAlbum = async () => {
-    if (
-      !window.confirm(
-        `Are you sure you want to permanently delete album "${album.name}" and all its audio files? This cannot be undone.`
-      )
-    ) {
+    const confirmed = await showConfirm({
+      title: 'Delete Album',
+      message: `Are you sure you want to permanently delete album "${album.name}" and all its audio files? This cannot be undone.`,
+      confirmText: 'Delete Album',
+      danger: true,
+    })
+    if (!confirmed) {
       return
     }
     try {
@@ -79,9 +83,10 @@ export default function AlbumDetailView() {
       if (!res.ok) {
         throw new Error('Failed to delete album')
       }
+      showToast('Album deleted successfully', 'success')
       navigate('/albums')
     } catch (err) {
-      alert(`Error deleting album: ${err.message}`)
+      showToast(`Error deleting album: ${err.message}`, 'error')
     }
   }
 

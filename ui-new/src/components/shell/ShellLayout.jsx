@@ -8,6 +8,7 @@ import SearchModal from '../search/SearchModal'
 import UploadModal from '../modals/UploadModal'
 import EditTagsModal from '../modals/EditTagsModal'
 import SettingsModal from '../modals/SettingsModal'
+import ConfirmModal from '../modals/ConfirmModal'
 import ToastContainer from '../common/ToastContainer'
 import { useUIStore } from '../../store/useUIStore'
 import { usePlayerStore } from '../../store/usePlayerStore'
@@ -15,6 +16,7 @@ import { usePlayerStore } from '../../store/usePlayerStore'
 export default function ShellLayout({ children }) {
   const {
     isRightPanelOpen,
+    isSidebarCollapsed,
     isSearchOpen,
     openSearch,
     closeSearch,
@@ -44,11 +46,13 @@ export default function ShellLayout({ children }) {
       <Sidebar />
       <Header />
       <main
-        className={`pt-16 pb-[76px] pl-[240px] h-full overflow-y-auto transition-all ${
-          isRightPanelOpen ? 'pr-[320px]' : 'pr-0'
+        className={`pt-16 pb-[128px] md:pb-[76px] ${
+          isSidebarCollapsed ? 'pl-0 md:pl-16' : 'pl-0 md:pl-[240px]'
+        } h-full overflow-y-auto transition-all ${
+          isRightPanelOpen ? 'pr-0 md:pr-[320px]' : 'pr-0 md:pr-16'
         }`}
       >
-        <div className="p-8 max-w-7xl mx-auto w-full">{children}</div>
+        <div className="p-4 sm:p-6 md:p-8 max-w-7xl mx-auto w-full">{children}</div>
       </main>
       <RightPanel />
       <PlayerBar />
@@ -80,6 +84,8 @@ export default function ShellLayout({ children }) {
         isOpen={isSettingsOpen}
         onClose={closeSettings}
       />
+
+      <ConfirmModal />
 
       <ToastContainer />
     </div>

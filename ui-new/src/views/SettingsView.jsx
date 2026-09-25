@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/useAuthStore'
 import { showToast } from '../store/useToastStore'
+import { showConfirm, showPrompt } from '../store/useConfirmStore'
 import { nativeUserApi } from '../api/nativeUserApi'
 import subsonic from '../api/subsonic'
 
@@ -28,6 +29,19 @@ export default function SettingsView() {
   })
   const [submittingUser, setSubmittingUser] = useState(false)
   const [userError, setUserError] = useState(null)
+
+  // Edit User State
+  const [editingUser, setEditingUser] = useState(null)
+  const [editForm, setEditForm] = useState({
+    name: '',
+    email: '',
+    password: '',
+    isAdmin: false,
+    canUpload: true,
+    canEditTags: true,
+  })
+  const [submittingEdit, setSubmittingEdit] = useState(false)
+  const [editError, setEditError] = useState(null)
 
   const loadUsers = async () => {
     setLoadingUsers(true)
@@ -119,12 +133,59 @@ export default function SettingsView() {
     }
   }
 
+  const handleStartEdit = (u) => {
+    setEditingUser(u)
+    setEditError(null)
+    setEditForm({
+      name: u.name || '',
+      email: u.email || '',
+      password: '',
+      isAdmin: Boolean(u.isAdmin),
+      canUpload: Boolean(u.canUpload),
+      canEditTags: Boolean(u.canEditTags),
+    })
+    setIsAddingUser(false)
+  }
+
+  const handleUpdateUser = async (e) => {
+    e.preventDefault()
+    if (!editingUser) return
+    setSubmittingEdit(true)
+    setEditError(null)
+    try {
+      const payload = {
+        name: editForm.name.trim() || editingUser.userName,
+        email: editForm.email.trim(),
+        isAdmin: editForm.isAdmin,
+        canUpload: editForm.canUpload,
+        canEditTags: editForm.canEditTags,
+      }
+      if (editForm.password.trim()) {
+        payload.password = editForm.password.trim()
+      }
+      await nativeUserApi.updateUser(editingUser.id, payload)
+      showToast(`User "${editingUser.userName}" updated successfully`, 'success', 'check_circle')
+      setEditingUser(null)
+      loadUsers()
+    } catch (err) {
+      setEditError(err.message || 'Failed to update user')
+    } finally {
+      setSubmittingEdit(false)
+    }
+  }
+
   const handleDeleteUser = async (u) => {
     if (u.userName === user?.username) {
-      alert('You cannot delete your own active account.')
+      showToast('You cannot delete your own active account.', 'error', 'warning')
       return
     }
-    if (!window.confirm(`Are you sure you want to permanently delete user "${u.userName}"?`)) {
+    const confirmed = await showConfirm({
+      title: 'Delete User',
+      message: `Are you sure you want to permanently delete user "${u.userName}"? This cannot be undone.`,
+      confirmText: 'Delete User',
+      danger: true,
+    })
+    if (!confirmed) {
       return
     }
     try {
@@ -137,7 +198,13 @@ export default function SettingsView() {
   }
 
   const handleChangePassword = async (u) => {
-    const newPass = window.prompt(`Enter new password for ${u.userName}:`)
+    const newPass = await showPrompt({
+      title: 'Change Password',
+      message: `Enter new password for ${u.userName}:`,
+      placeholder: 'New password',
+      inputType: 'password',
+      confirmText: 'Update Password',
+    })
     if (newPass && newPass.trim()) {
       try {
         await nativeUserApi.updateUser(u.id, { password: newPass.trim() })
@@ -182,7 +249,7 @@ export default function SettingsView() {
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex items-center gap-2 border-b border-outline-variant pb-3 overflow-x-auto">
+      <div className="flex items-center gap-2 border-b border-outline-variant py-1.5 px-0.5 mb-2 overflow-x-auto">
         {[
           { id: 'profile', label: 'Profile & Library', icon: 'person' },
           ...(user?.isAdmin ? [{ id: 'users', label: 'User Management', icon: 'group' }] : []),
@@ -194,10 +261,10 @@ export default function SettingsView() {
             type="button"
             aria-label={tab.label}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-4 h-9 rounded-xl text-xs font-medium transition-all cursor-pointer whitespace-nowrap leading-none ${
+            className={`flex items-center gap-2 px-4 h-9 rounded-xl text-xs font-medium transition-all cursor-pointer whitespace-nowrap leading-none border focus:outline-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/40 ${
               activeTab === tab.id
-                ? 'bg-surface-container text-primary font-semibold border border-primary/20 shadow-sm'
-                : 'text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface'
+                ? 'bg-surface-container text-primary font-semibold border-primary/20 shadow-sm'
+                : 'border-transparent text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface'
             }`}
           >
             <span className="material-symbols-outlined text-[17px] leading-none">{tab.icon}</span>
@@ -431,6 +498,116 @@ export default function SettingsView() {
             </form>
           )}
 
+          {/* Edit User Form Drawer */}
+          {editingUser && (
+            <form
+              onSubmit={handleUpdateUser}
+              className="p-5 rounded-2xl bg-surface-container-low border border-primary/40 space-y-4 animate-in fade-in"
+            >
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-semibold text-primary flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[18px]">edit</span>
+                  <span>Edit User: @{editingUser.userName}</span>
+                </h4>
+                <button
+                  type="button"
+                  onClick={() => setEditingUser(null)}
+                  className="text-on-surface-variant hover:text-on-surface text-xs font-mono cursor-pointer"
+                >
+                  ✕ Close
+                </button>
+              </div>
+
+              {editError && (
+                <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs">
+                  {editError}
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs text-on-surface-variant font-mono">Display Name</label>
+                  <input
+                    type="text"
+                    value={editForm.name}
+                    onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                    placeholder="e.g. Sound Master"
+                    className="w-full h-9 px-3 rounded-xl bg-surface-container border border-outline-variant text-xs text-on-surface focus:outline-none focus:border-primary"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs text-on-surface-variant font-mono">Email Address</label>
+                  <input
+                    type="email"
+                    value={editForm.email}
+                    onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                    placeholder="user@example.com"
+                    className="w-full h-9 px-3 rounded-xl bg-surface-container border border-outline-variant text-xs text-on-surface focus:outline-none focus:border-primary"
+                  />
+                </div>
+                <div className="space-y-1 md:col-span-2">
+                  <label className="text-xs text-on-surface-variant font-mono">
+                    New Password (optional)
+                  </label>
+                  <input
+                    type="password"
+                    value={editForm.password}
+                    onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
+                    placeholder="Leave empty to keep existing password"
+                    className="w-full h-9 px-3 rounded-xl bg-surface-container border border-outline-variant text-xs text-on-surface focus:outline-none focus:border-primary"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-6 pt-1 text-xs">
+                <label className="flex items-center gap-2 cursor-pointer text-on-surface">
+                  <input
+                    type="checkbox"
+                    checked={editForm.isAdmin}
+                    onChange={(e) => setEditForm({ ...editForm, isAdmin: e.target.checked })}
+                    className="rounded-md accent-primary"
+                  />
+                  <span>Administrator Access</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer text-on-surface">
+                  <input
+                    type="checkbox"
+                    checked={editForm.canUpload}
+                    onChange={(e) => setEditForm({ ...editForm, canUpload: e.target.checked })}
+                    className="rounded-md accent-primary"
+                  />
+                  <span>Allow Audio Uploads</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer text-on-surface">
+                  <input
+                    type="checkbox"
+                    checked={editForm.canEditTags}
+                    onChange={(e) => setEditForm({ ...editForm, canEditTags: e.target.checked })}
+                    className="rounded-md accent-primary"
+                  />
+                  <span>Allow Metadata Editing</span>
+                </label>
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingUser(null)}
+                  className="px-4 h-9 rounded-xl bg-surface-container text-xs text-on-surface hover:bg-surface-container-highest transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submittingEdit}
+                  className="px-5 h-9 rounded-xl bg-primary text-white text-xs font-semibold hover:bg-primary-bright disabled:opacity-50 transition-all cursor-pointer shadow-md leading-none"
+                >
+                  {submittingEdit ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          )}
+
           {/* User Table */}
           <div className="rounded-2xl border border-outline-variant overflow-hidden bg-surface-container-low">
             {loadingUsers ? (
@@ -487,6 +664,17 @@ export default function SettingsView() {
                       </td>
                       <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            type="button"
+                            title="Edit user"
+                            aria-label={`Edit ${u.userName}`}
+                            onClick={() => handleStartEdit(u)}
+                            className="w-8 h-8 rounded-xl hover:bg-surface-container text-on-surface-variant hover:text-primary flex items-center justify-center transition-colors cursor-pointer leading-none"
+                          >
+                            <span className="material-symbols-outlined text-[17px] leading-none">
+                              edit
+                            </span>
+                          </button>
                           <button
                             type="button"
                             title="Change password"

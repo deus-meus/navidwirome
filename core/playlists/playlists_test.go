@@ -52,11 +52,11 @@ var _ = Describe("Playlists", func() {
 			Expect(mockPlsRepo.Deleted).To(ContainElement("pls-1"))
 		})
 
-		It("allows admin to delete any playlist", func() {
+		It("denies non-owner admin from deleting another user's playlist", func() {
 			ctx = request.WithUser(ctx, model.User{ID: "admin-1", IsAdmin: true})
 			err := ps.Delete(ctx, "pls-1")
-			Expect(err).ToNot(HaveOccurred())
-			Expect(mockPlsRepo.Deleted).To(ContainElement("pls-1"))
+			Expect(err).To(MatchError(model.ErrNotAuthorized))
+			Expect(mockPlsRepo.Deleted).To(BeEmpty())
 		})
 
 		It("denies non-owner, non-admin from deleting", func() {
@@ -125,11 +125,10 @@ var _ = Describe("Playlists", func() {
 			Expect(mockPlsRepo.Last.Tracks).To(HaveLen(1))
 		})
 
-		It("allows admin to replace tracks on any playlist", func() {
+		It("denies non-owner admin from replacing tracks on another user's playlist", func() {
 			ctx = request.WithUser(ctx, model.User{ID: "admin-1", IsAdmin: true})
-			id, err := ps.Create(ctx, "pls-2", "", []string{"song-3"})
-			Expect(err).ToNot(HaveOccurred())
-			Expect(id).To(Equal("pls-2"))
+			_, err := ps.Create(ctx, "pls-2", "", []string{"song-3"})
+			Expect(err).To(MatchError(model.ErrNotAuthorized))
 		})
 
 		It("denies non-owner, non-admin from replacing tracks on existing playlist", func() {
@@ -185,10 +184,10 @@ var _ = Describe("Playlists", func() {
 			Expect(err).ToNot(HaveOccurred())
 		})
 
-		It("allows admin to update any playlist", func() {
+		It("denies non-owner admin from updating another user's playlist", func() {
 			ctx = request.WithUser(ctx, model.User{ID: "admin-1", IsAdmin: true})
 			err := ps.Update(ctx, "pls-other", new("Updated Name"), nil, nil, nil, nil)
-			Expect(err).ToNot(HaveOccurred())
+			Expect(err).To(MatchError(model.ErrNotAuthorized))
 		})
 
 		It("denies non-owner, non-admin from updating", func() {
@@ -258,11 +257,10 @@ var _ = Describe("Playlists", func() {
 			Expect(mockTracks.AddedIds).To(ConsistOf("song-1", "song-2"))
 		})
 
-		It("allows admin to add tracks to any playlist", func() {
+		It("denies non-owner admin from adding tracks to another user's playlist", func() {
 			ctx = request.WithUser(ctx, model.User{ID: "admin-1", IsAdmin: true})
-			count, err := ps.AddTracks(ctx, "pls-other", []string{"song-1"})
-			Expect(err).ToNot(HaveOccurred())
-			Expect(count).To(Equal(2))
+			_, err := ps.AddTracks(ctx, "pls-other", []string{"song-1"})
+			Expect(err).To(MatchError(model.ErrNotAuthorized))
 		})
 
 		It("denies non-owner, non-admin", func() {
@@ -434,10 +432,10 @@ var _ = Describe("Playlists", func() {
 			Expect(newPath).To(BeAnExistingFile())
 		})
 
-		It("allows admin to set image on any playlist", func() {
+		It("denies non-owner admin from setting image on another user's playlist", func() {
 			ctx = request.WithUser(ctx, model.User{ID: "admin-1", IsAdmin: true})
 			err := ps.SetImage(ctx, "pls-other", strings.NewReader("data"), ".jpg")
-			Expect(err).ToNot(HaveOccurred())
+			Expect(err).To(MatchError(model.ErrNotAuthorized))
 		})
 
 		It("denies non-owner", func() {

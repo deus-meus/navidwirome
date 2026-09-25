@@ -145,3 +145,33 @@ func ParseFilenameMetadata(filename string) (string, string) {
 
 	return "", cleaned
 }
+
+// ResolveCoverFilename generates an artwork filename based on song/album metadata.
+// E.g. "Artist - Album.jpg" or "Artist - Title.jpg" or "Title.jpg".
+// Fallback is "cover.jpg" if metadata is empty.
+func ResolveCoverFilename(artist, album, title, ext string) string {
+	cleanArtist := strings.TrimSpace(artist)
+	cleanAlbum := strings.TrimSpace(album)
+	cleanTitle := strings.TrimSpace(title)
+
+	if ext == "" {
+		ext = ".jpg"
+	} else if !strings.HasPrefix(ext, ".") {
+		ext = "." + ext
+	}
+
+	var baseName string
+	if cleanArtist != "" && cleanAlbum != "" {
+		baseName = fmt.Sprintf("%s - %s", SanitizeSegment(cleanArtist), SanitizeSegment(cleanAlbum))
+	} else if cleanAlbum != "" {
+		baseName = SanitizeSegment(cleanAlbum)
+	} else if cleanArtist != "" && cleanTitle != "" {
+		baseName = fmt.Sprintf("%s - %s", SanitizeSegment(cleanArtist), SanitizeSegment(cleanTitle))
+	} else if cleanTitle != "" {
+		baseName = SanitizeSegment(cleanTitle)
+	} else {
+		baseName = "cover"
+	}
+
+	return baseName + ext
+}

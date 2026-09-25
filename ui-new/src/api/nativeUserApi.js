@@ -10,6 +10,16 @@ export function getAuthHeaders() {
 }
 
 export const nativeUserApi = {
+  async getCurrentUser() {
+    const res = await fetch('/api/me', {
+      headers: getAuthHeaders(),
+    })
+    if (!res.ok) {
+      throw new Error(`Failed to fetch current user: HTTP ${res.status}`)
+    }
+    return res.json()
+  },
+
   async getUsers() {
     const res = await fetch('/api/user', {
       headers: getAuthHeaders(),

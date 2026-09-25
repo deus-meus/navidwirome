@@ -235,6 +235,49 @@ func TestDownloadCoverArtWithFallback_PrimaryFails_FallbackSucceeds(t *testing.T
 	assert.Equal(t, []byte("fallback-art"), data)
 }
 
+func TestDownloadCoverArtNamed(t *testing.T) {
+	expectedData := []byte("custom-named-cover-art-bytes")
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "image/jpeg")
+		w.Write(expectedData)
+	}))
+	defer ts.Close()
+
+	tmpDir := t.TempDir()
+	client := fingerprint.NewClient()
+
+	customName := "The Beatles - Abbey Road.jpg"
+	err := client.DownloadCoverArtNamed(context.Background(), ts.URL, tmpDir, customName)
+	require.NoError(t, err)
+
+	destFile := filepath.Join(tmpDir, customName)
+	assert.FileExists(t, destFile)
+	data, err := os.ReadFile(destFile)
+	require.NoError(t, err)
+	assert.Equal(t, expectedData, data)
+}
+
+func TestDownloadCoverArtWithFallbackNamed(t *testing.T) {
+	primaryServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "image/jpeg")
+		w.Write([]byte("custom-primary-art"))
+	}))
+	defer primaryServer.Close()
+
+	tmpDir := t.TempDir()
+	client := fingerprint.NewClient()
+
+	customName := "Pink Floyd - Time.jpg"
+	err := client.DownloadCoverArtWithFallbackNamed(context.Background(), primaryServer.URL, "Pink Floyd", "Time", tmpDir, customName)
+	require.NoError(t, err)
+
+	destFile := filepath.Join(tmpDir, customName)
+	assert.FileExists(t, destFile)
+	data, err := os.ReadFile(destFile)
+	require.NoError(t, err)
+	assert.Equal(t, []byte("custom-primary-art"), data)
+}
+
 func TestIdentifyRealFile(t *testing.T) {
 	testFile := "/home/dwidora/Music/_Inbox/Conundrum.mp3"
 	if _, err := os.Stat(testFile); os.IsNotExist(err) {

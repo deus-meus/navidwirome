@@ -139,3 +139,27 @@ func TestParseFilenameMetadata(t *testing.T) {
 		})
 	}
 }
+
+func TestResolveCoverFilename(t *testing.T) {
+	tests := []struct {
+		artist   string
+		album    string
+		title    string
+		ext      string
+		expected string
+	}{
+		{"Burnt Friedman", "Secret Rhythms", "Obscure Gesture", ".jpg", "Burnt Friedman - Secret Rhythms.jpg"},
+		{"Burnt Friedman", "", "Obscure Gesture", ".jpg", "Burnt Friedman - Obscure Gesture.jpg"},
+		{"", "Secret Rhythms", "Obscure Gesture", ".jpg", "Secret Rhythms.jpg"},
+		{"", "", "Obscure Gesture", ".jpg", "Obscure Gesture.jpg"},
+		{"", "", "", ".jpg", "cover.jpg"},
+		{"AC/DC", "Back in Black", "", ".png", "AC_DC - Back in Black.png"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.expected, func(t *testing.T) {
+			actual := organizer.ResolveCoverFilename(tt.artist, tt.album, tt.title, tt.ext)
+			assert.Equal(t, tt.expected, actual)
+		})
+	}
+}

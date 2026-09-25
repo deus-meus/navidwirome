@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import subsonic from '../../api/subsonic'
 import { usePlaylistStore } from '../../store/usePlaylistStore'
+import { useAuthStore } from '../../store/useAuthStore'
 import { showToast } from '../../store/useToastStore'
 
 export default function AddToPlaylistModal({ isOpen, track, onClose }) {
@@ -10,6 +11,9 @@ export default function AddToPlaylistModal({ isOpen, track, onClose }) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
 
+  const { user } = useAuthStore()
+  const currentUsername = (user?.username || user?.userName || '').toLowerCase()
+
   useEffect(() => {
     if (isOpen) {
       setLoading(true)
@@ -18,7 +22,11 @@ export default function AddToPlaylistModal({ isOpen, track, onClose }) {
       subsonic
         .getPlaylists()
         .then((data) => {
-          setPlaylists(data || [])
+          const userPlaylists = (data || []).filter((pl) => {
+            const plOwner = (pl.owner || '').toLowerCase()
+            return Boolean(currentUsername && plOwner && plOwner === currentUsername)
+          })
+          setPlaylists(userPlaylists)
           setLoading(false)
         })
         .catch((err) => {
@@ -26,7 +34,7 @@ export default function AddToPlaylistModal({ isOpen, track, onClose }) {
           setLoading(false)
         })
     }
-  }, [isOpen])
+  }, [isOpen, currentUsername])
 
   useEffect(() => {
     const handleKeyDown = (e) => {

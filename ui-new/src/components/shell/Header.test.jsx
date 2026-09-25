@@ -3,6 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom'
 import Header from './Header'
 import { useUIStore } from '../../store/useUIStore'
+import { useAuthStore } from '../../store/useAuthStore'
 
 const mockNavigate = vi.fn()
 vi.mock('react-router-dom', async () => {
@@ -17,6 +18,7 @@ describe('Header', () => {
   beforeEach(() => {
     vi.restoreAllMocks()
     useUIStore.setState({ activeTab: 'overview' })
+    useAuthStore.setState({ user: null })
   })
 
   it('renders tabs and upload music button', () => {
@@ -57,5 +59,19 @@ describe('Header', () => {
     fireEvent.click(uploadBtn)
 
     expect(useUIStore.getState().isUploadOpen).toBe(true)
+  })
+
+  it('hides upload music button when user is non-admin and lacks upload permission', () => {
+    useAuthStore.setState({
+      user: { username: 'dwi', isAdmin: false, canUpload: false },
+    })
+
+    render(
+      <BrowserRouter>
+        <Header />
+      </BrowserRouter>
+    )
+
+    expect(screen.queryByRole('button', { name: /upload music/i })).not.toBeInTheDocument()
   })
 })

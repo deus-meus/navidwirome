@@ -11,6 +11,13 @@
     background-color: #131315;
     color: #f4f3f0;
   }
+
+  button:focus,
+  button:focus-visible,
+  input:focus,
+  input:focus-visible {
+    outline: none;
+  }
 }
 
 /* Minimalist scrollbars */

@@ -5,6 +5,8 @@ import AddToPlaylistModal from '../modals/AddToPlaylistModal'
 import { usePlayerStore } from '../../store/usePlayerStore'
 import { useAuthStore } from '../../store/useAuthStore'
 import { useUIStore } from '../../store/useUIStore'
+import { showConfirm } from '../../store/useConfirmStore'
+import { showToast } from '../../store/useToastStore'
 
 function formatDuration(sec) {
   if (!sec || isNaN(sec)) return '0:00'
@@ -41,11 +43,13 @@ export default function TrackTable({
   }
 
   const handleDelete = async (track) => {
-    if (
-      !window.confirm(
-        `Are you sure you want to permanently delete track "${track.title}" from disk? This cannot be undone.`
-      )
-    ) {
+    const confirmed = await showConfirm({
+      title: 'Delete Track',
+      message: `Are you sure you want to permanently delete track "${track.title}" from disk? This cannot be undone.`,
+      confirmText: 'Delete Track',
+      danger: true,
+    })
+    if (!confirmed) {
       return
     }
     if (onDeleteTrack) {
@@ -56,9 +60,10 @@ export default function TrackTable({
         if (!res.ok) {
           throw new Error('Failed to delete track')
         }
+        showToast('Track deleted successfully', 'success')
         window.location.reload()
       } catch (err) {
-        alert(`Error deleting track: ${err.message}`)
+        showToast(`Error deleting track: ${err.message}`, 'error')
       }
     }
   }

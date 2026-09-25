@@ -31,6 +31,12 @@ describe('useUIStore', () => {
     useUIStore.getState().toggleRightPanel()
     expect(useUIStore.getState().isRightPanelOpen).toBe(false)
 
+    useUIStore.getState().openRightPanel()
+    expect(useUIStore.getState().isRightPanelOpen).toBe(true)
+
+    useUIStore.getState().closeRightPanel()
+    expect(useUIStore.getState().isRightPanelOpen).toBe(false)
+
     useUIStore.getState().setActivePanelTab('queue')
     expect(useUIStore.getState().activePanelTab).toBe('queue')
   })

@@ -184,8 +184,9 @@ func (api *Router) handleMusicUpload(w http.ResponseWriter, r *http.Request) {
 
 	// Download album cover if target is an organized album folder
 	albumDir := filepath.Dir(finalPath)
-	if albumDir != musicFolder && filepath.Base(albumDir) != "_Inbox" {
-		_ = client.DownloadCoverArtWithFallback(ctx, coverURL, artist, title, albumDir)
+	if albumDir != musicFolder && filepath.Base(albumDir) != "_Inbox" && !hasArtworkInDir(albumDir) {
+		coverFilename := organizer.ResolveCoverFilename(artist, album, title, ".jpg")
+		_ = client.DownloadCoverArtWithFallbackNamed(ctx, coverURL, artist, title, albumDir, coverFilename)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -359,12 +360,10 @@ func (api *Router) handleUpdateTrackTags(w http.ResponseWriter, r *http.Request)
 
 	// Download album cover if not present
 	albumDir := filepath.Dir(fullSourcePath)
-	if albumDir != musicFolder && filepath.Base(albumDir) != "_Inbox" {
-		coverPath := filepath.Join(albumDir, "cover.jpg")
-		if _, err := os.Stat(coverPath); os.IsNotExist(err) {
-			client := fingerprint.NewClient()
-			_ = client.DownloadCoverArtWithFallback(ctx, updates.CoverArtURL, mediaFile.Artist, mediaFile.Title, albumDir)
-		}
+	if albumDir != musicFolder && filepath.Base(albumDir) != "_Inbox" && !hasArtworkInDir(albumDir) {
+		coverFilename := organizer.ResolveCoverFilename(mediaFile.Artist, mediaFile.Album, mediaFile.Title, ".jpg")
+		client := fingerprint.NewClient()
+		_ = client.DownloadCoverArtWithFallbackNamed(ctx, updates.CoverArtURL, mediaFile.Artist, mediaFile.Title, albumDir, coverFilename)
 	}
 
 	_ = api.ds.MediaFile(ctx).Put(mediaFile)
@@ -496,7 +495,7 @@ func (api *Router) handleDeleteAlbum(w http.ResponseWriter, r *http.Request) {
 		entries, _ := os.ReadDir(dir)
 		if len(entries) == 0 {
 			_ = os.Remove(dir)
-		} else if len(entries) == 1 && strings.HasPrefix(strings.ToLower(entries[0].Name()), "cover.") {
+		} else if len(entries) == 1 && (isArtworkFile(entries[0].Name()) || strings.HasPrefix(strings.ToLower(entries[0].Name()), "cover.")) {
 			_ = os.Remove(filepath.Join(dir, entries[0].Name()))
 			_ = os.Remove(dir)
 		}
@@ -508,4 +507,25 @@ func (api *Router) handleDeleteAlbum(w http.ResponseWriter, r *http.Request) {
 		"success": true,
 		"deleted": albumID,
 	})
+}
+
+func isArtworkFile(filename string) bool {
+	ext := strings.ToLower(filepath.Ext(filename))
+	return ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".webp"
+}
+
+func hasArtworkInDir(dir string) bool {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return false
+	}
+	for _, e := range entries {
+		if e.IsDir() {
+			continue
+		}
+		if isArtworkFile(e.Name()) {
+			return true
+		}
+	}
+	return false
 }

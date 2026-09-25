@@ -49,4 +49,79 @@ describe('nativeMusicApi', () => {
       nativeMusicApi.updateTrackTags('track-1', { title: 'Failed Title' })
     ).rejects.toThrow('Forbidden: you do not have permission to edit tags')
   })
+
+  it('uploadPlaylistImage sends POST request with FormData and auth token', async () => {
+    localStorage.setItem('token', 'mock-jwt-token')
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      text: vi.fn().mockResolvedValue('ok'),
+    })
+
+    const mockFile = new File(['image-bytes'], 'cover.png', { type: 'image/png' })
+    const result = await nativeMusicApi.uploadPlaylistImage('pl-123', mockFile)
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      '/api/playlist/pl-123/image',
+      expect.objectContaining({
+        method: 'POST',
+        headers: {
+          'x-nd-authorization': 'Bearer mock-jwt-token',
+        },
+      })
+    )
+    expect(result).toBe(true)
+  })
+
+  it('deletePlaylistImage sends DELETE request with auth token', async () => {
+    localStorage.setItem('token', 'mock-jwt-token')
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      text: vi.fn().mockResolvedValue('ok'),
+    })
+
+    const result = await nativeMusicApi.deletePlaylistImage('pl-123')
+
+    expect(global.fetch).toHaveBeenCalledWith('/api/playlist/pl-123/image', {
+      method: 'DELETE',
+      headers: {
+        'x-nd-authorization': 'Bearer mock-jwt-token',
+      },
+    })
+    expect(result).toBe(true)
+  })
+
+  it('uploadMusicFile sends POST request with FormData file and auth token', async () => {
+    localStorage.setItem('token', 'mock-jwt-token')
+    const mockUploadResponse = { success: true, file: 'track.flac', id: 'trk-1' }
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockResolvedValue(mockUploadResponse),
+    })
+
+    const mockAudio = new File(['flac-bytes'], 'track.flac', { type: 'audio/flac' })
+    const result = await nativeMusicApi.uploadMusicFile(mockAudio)
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      '/api/music/upload',
+      expect.objectContaining({
+        method: 'POST',
+        headers: {
+          'x-nd-authorization': 'Bearer mock-jwt-token',
+        },
+      })
+    )
+    expect(result).toEqual(mockUploadResponse)
+  })
+
+  it('throws an error when uploadMusicFile fails', async () => {
+    localStorage.setItem('token', 'mock-jwt-token')
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+      text: vi.fn().mockResolvedValue('Unauthorized'),
+    })
+
+    const mockAudio = new File(['flac-bytes'], 'track.flac', { type: 'audio/flac' })
+    await expect(nativeMusicApi.uploadMusicFile(mockAudio)).rejects.toThrow('Unauthorized')
+  })
 })

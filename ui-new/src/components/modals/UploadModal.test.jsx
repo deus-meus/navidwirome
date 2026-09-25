@@ -36,4 +36,25 @@ describe('UploadModal', () => {
     fireEvent.click(cancelBtn)
     expect(handleClose).toHaveBeenCalled()
   })
+
+  it('uploads selected files using nativeMusicApi and fires onUploadComplete', async () => {
+    const { nativeMusicApi } = await import('../../api/nativeMusicApi')
+    const uploadSpy = vi.spyOn(nativeMusicApi, 'uploadMusicFile').mockResolvedValue({ success: true })
+    const handleComplete = vi.fn()
+    const handleClose = vi.fn()
+
+    render(<UploadModal isOpen={true} onClose={handleClose} onUploadComplete={handleComplete} />)
+
+    const file = new File(['audio dummy data'], 'test_track.flac', { type: 'audio/flac' })
+    const input = screen.getByTestId('file-upload-input')
+    fireEvent.change(input, { target: { files: [file] } })
+
+    const commitBtn = screen.getByRole('button', { name: /commit to library/i })
+    fireEvent.click(commitBtn)
+
+    await vi.waitFor(() => {
+      expect(uploadSpy).toHaveBeenCalledWith(file)
+      expect(handleComplete).toHaveBeenCalled()
+    })
+  })
 })

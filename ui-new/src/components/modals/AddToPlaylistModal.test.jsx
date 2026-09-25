@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import AddToPlaylistModal from './AddToPlaylistModal'
 import subsonic from '../../api/subsonic'
+import { useAuthStore } from '../../store/useAuthStore'
 
 describe('AddToPlaylistModal', () => {
   const mockTrack = {
@@ -12,15 +13,16 @@ describe('AddToPlaylistModal', () => {
 
   beforeEach(() => {
     vi.restoreAllMocks()
+    useAuthStore.setState({ user: { username: 'Admin', isAdmin: true } })
     vi.spyOn(subsonic, 'getPlaylists').mockResolvedValue([
-      { id: 'pl-1', name: 'Road Trip', songCount: 5 },
-      { id: 'pl-2', name: 'Late Night', songCount: 12 },
+      { id: 'pl-1', name: 'Road Trip', owner: 'Admin', songCount: 5 },
+      { id: 'pl-2', name: 'Late Night', owner: 'Admin', songCount: 12 },
     ])
     vi.spyOn(subsonic, 'addToPlaylist').mockResolvedValue(true)
     vi.spyOn(subsonic, 'createPlaylist').mockResolvedValue({ id: 'pl-new', name: 'Surf Vibes' })
   })
 
-  it('renders track title and existing playlists when open', async () => {
+  it('renders track title and existing playlists owned by user when open', async () => {
     render(<AddToPlaylistModal isOpen={true} track={mockTrack} onClose={() => {}} />)
 
     expect(screen.getByText(/Add to Playlist/i)).toBeInTheDocument()
@@ -29,6 +31,20 @@ describe('AddToPlaylistModal', () => {
     await waitFor(() => {
       expect(screen.getByText('Road Trip')).toBeInTheDocument()
       expect(screen.getByText('Late Night')).toBeInTheDocument()
+    })
+  })
+
+  it('filters out playlists owned by other users', async () => {
+    vi.spyOn(subsonic, 'getPlaylists').mockResolvedValue([
+      { id: 'pl-1', name: 'Road Trip', owner: 'Admin', songCount: 5 },
+      { id: 'pl-2', name: 'Dwi Mixtape', owner: 'dwi', songCount: 12 },
+    ])
+
+    render(<AddToPlaylistModal isOpen={true} track={mockTrack} onClose={() => {}} />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Road Trip')).toBeInTheDocument()
+      expect(screen.queryByText('Dwi Mixtape')).not.toBeInTheDocument()
     })
   })
 

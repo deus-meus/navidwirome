@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import subsonic from '../api/subsonic'
+import { nativeUserApi } from '../api/nativeUserApi'
 
 export const useAuthStore = create((set) => ({
   user: null,
@@ -20,6 +21,23 @@ export const useAuthStore = create((set) => ({
         const stored = localStorage.getItem('navidwirome_user')
         if (stored) savedUser = JSON.parse(stored)
       } catch {}
+
+      const token = localStorage.getItem('token')
+      if (token) {
+        try {
+          const freshUser = await nativeUserApi.getCurrentUser()
+          if (freshUser) {
+            savedUser = {
+              ...(savedUser || {}),
+              ...freshUser,
+              username: freshUser.username || subsonic.username,
+            }
+            localStorage.setItem('navidwirome_user', JSON.stringify(savedUser))
+          }
+        } catch (err) {
+          console.warn('Failed to refresh user profile from /api/me:', err)
+        }
+      }
 
       set({
         isAuthenticated: true,

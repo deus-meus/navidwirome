@@ -2,6 +2,7 @@ package nativeapi_test
 
 import (
 	"bytes"
+	"encoding/json"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
@@ -22,19 +23,19 @@ import (
 
 var _ = Describe("Music Mutation Endpoints", func() {
 	var (
-		router         http.Handler
-		ds             *tests.MockDataStore
-		mfRepo         *tests.MockMediaFileRepo
-		userRepo       *tests.MockedUserRepo
-		w              *httptest.ResponseRecorder
-		uploaderUser   model.User
-		editorUser     model.User
-		regularUser    model.User
-		adminUser      model.User
-		uploaderToken  string
-		editorToken    string
-		regularToken   string
-		adminToken     string
+		router        http.Handler
+		ds            *tests.MockDataStore
+		mfRepo        *tests.MockMediaFileRepo
+		userRepo      *tests.MockedUserRepo
+		w             *httptest.ResponseRecorder
+		uploaderUser  model.User
+		editorUser    model.User
+		regularUser   model.User
+		adminUser     model.User
+		uploaderToken string
+		editorToken   string
+		regularToken  string
+		adminToken    string
 	)
 
 	BeforeEach(func() {
@@ -240,6 +241,59 @@ var _ = Describe("Music Mutation Endpoints", func() {
 
 			_, dbErr := mfRepo.Get("song-alb-1")
 			Expect(dbErr).To(HaveOccurred())
+		})
+
+		It("cleans up custom named cover art and empty directory on album delete", func() {
+			testMusicDir := GinkgoT().TempDir()
+			conf.Server.MusicFolder = testMusicDir
+
+			albumFolder := filepath.Join(testMusicDir, "Pink Floyd", "The Wall")
+			Expect(os.MkdirAll(albumFolder, 0755)).To(Succeed())
+
+			trackPath := filepath.Join(albumFolder, "01 - In the Flesh.mp3")
+			Expect(os.WriteFile(trackPath, []byte("audio"), 0644)).To(Succeed())
+
+			coverPath := filepath.Join(albumFolder, "Pink Floyd - The Wall.jpg")
+			Expect(os.WriteFile(coverPath, []byte("artwork"), 0644)).To(Succeed())
+
+			Expect(mfRepo.Put(&model.MediaFile{ID: "track-pf-1", AlbumID: "alb-pf", Title: "In the Flesh", Path: "Pink Floyd/The Wall/01 - In the Flesh.mp3"})).To(Succeed())
+
+			req := httptest.NewRequest("DELETE", "/music/album/alb-pf", nil)
+			req.Header.Set("x-nd-authorization", "Bearer "+adminToken)
+
+			router.ServeHTTP(w, req)
+			Expect(w.Code).To(Equal(http.StatusOK))
+
+			_, trackStat := os.Stat(trackPath)
+			Expect(os.IsNotExist(trackStat)).To(BeTrue())
+
+			_, coverStat := os.Stat(coverPath)
+			Expect(os.IsNotExist(coverStat)).To(BeTrue())
+
+			_, dirStat := os.Stat(albumFolder)
+			Expect(os.IsNotExist(dirStat)).To(BeTrue())
+		})
+	})
+
+	Describe("GET /api/me", func() {
+		It("returns 401 Unauthorized for unauthenticated requests", func() {
+			req := httptest.NewRequest("GET", "/me", nil)
+			router.ServeHTTP(w, req)
+			Expect(w.Code).To(Equal(http.StatusUnauthorized))
+		})
+
+		It("returns current user profile and permissions", func() {
+			req := httptest.NewRequest("GET", "/me", nil)
+			req.Header.Set("x-nd-authorization", "Bearer "+uploaderToken)
+
+			router.ServeHTTP(w, req)
+			Expect(w.Code).To(Equal(http.StatusOK))
+
+			var res map[string]any
+			Expect(json.Unmarshal(w.Body.Bytes(), &res)).To(Succeed())
+			Expect(res["username"]).To(Equal("uploader"))
+			Expect(res["canUpload"]).To(Equal(true))
+			Expect(res["isAdmin"]).To(Equal(false))
 		})
 	})
 })

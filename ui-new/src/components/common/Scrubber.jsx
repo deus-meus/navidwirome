@@ -1,11 +1,15 @@
 export default function Scrubber({
   value = 0,
   max = 100,
+  step,
   onChange,
   className = '',
   color = 'bg-primary',
 }) {
-  const percentage = max > 0 ? Math.min(100, Math.max(0, (value / max) * 100)) : 0
+  const safeMax = max ?? 100
+  const safeValue = value ?? 0
+  const percentage = safeMax > 0 ? Math.min(100, Math.max(0, (safeValue / safeMax) * 100)) : 0
+  const effectiveStep = step !== undefined ? step : safeMax <= 1 ? '0.01' : '0.1'
 
   return (
     <div className={`relative flex items-center h-4 w-full group cursor-pointer ${className}`}>
@@ -18,13 +22,14 @@ export default function Scrubber({
       <input
         type="range"
         min="0"
-        max={max || 100}
-        value={value || 0}
+        max={safeMax}
+        step={effectiveStep}
+        value={safeValue}
         onChange={(e) => onChange && onChange(parseFloat(e.target.value))}
         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-        aria-valuenow={value}
+        aria-valuenow={safeValue}
         aria-valuemin="0"
-        aria-valuemax={max}
+        aria-valuemax={safeMax}
       />
     </div>
   )

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuthStore } from '../../store/useAuthStore'
 import { showToast } from '../../store/useToastStore'
+import { showConfirm, showPrompt } from '../../store/useConfirmStore'
 import { nativeUserApi } from '../../api/nativeUserApi'
 import subsonic from '../../api/subsonic'
 
@@ -132,10 +133,16 @@ export default function SettingsModal({ isOpen, onClose }) {
 
   const handleDeleteUser = async (u) => {
     if (u.userName === user?.username) {
-      alert('You cannot delete your own active account.')
+      showToast('You cannot delete your own active account.', 'error', 'warning')
       return
     }
-    if (!window.confirm(`Are you sure you want to permanently delete user "${u.userName}"?`)) {
+    const confirmed = await showConfirm({
+      title: 'Delete User',
+      message: `Are you sure you want to permanently delete user "${u.userName}"? This cannot be undone.`,
+      confirmText: 'Delete User',
+      danger: true,
+    })
+    if (!confirmed) {
       return
     }
     try {
@@ -148,7 +155,13 @@ export default function SettingsModal({ isOpen, onClose }) {
   }
 
   const handleChangePassword = async (u) => {
-    const newPass = window.prompt(`Enter new password for ${u.userName}:`)
+    const newPass = await showPrompt({
+      title: 'Change Password',
+      message: `Enter new password for ${u.userName}:`,
+      placeholder: 'New password',
+      inputType: 'password',
+      confirmText: 'Update Password',
+    })
     if (newPass && newPass.trim()) {
       try {
         await nativeUserApi.updateUser(u.id, { password: newPass.trim() })
@@ -194,7 +207,7 @@ export default function SettingsModal({ isOpen, onClose }) {
         </div>
 
         {/* Modal Navigation Tabs */}
-        <div className="flex items-center gap-1 border-b border-outline-variant pb-2 overflow-x-auto">
+        <div className="flex items-center gap-1 border-b border-outline-variant py-1.5 px-0.5 mb-2 overflow-x-auto">
           {[
             { id: 'profile', label: 'Profile & Library', icon: 'person' },
             ...(user?.isAdmin ? [{ id: 'users', label: 'User Management', icon: 'group' }] : []),

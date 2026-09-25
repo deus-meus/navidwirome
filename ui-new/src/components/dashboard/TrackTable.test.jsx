@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import TrackTable from './TrackTable'
 import { useAuthStore } from '../../store/useAuthStore'
 import { usePlayerStore } from '../../store/usePlayerStore'
 import { useUIStore } from '../../store/useUIStore'
+import { useConfirmStore } from '../../store/useConfirmStore'
 
 describe('TrackTable', () => {
   const mockTracks = [
@@ -134,5 +135,21 @@ describe('TrackTable', () => {
     const queueBtns = screen.getAllByRole('button', { name: /add to queue/i })
     fireEvent.click(queueBtns[0])
     expect(addToQueueSpy).toHaveBeenCalledWith(mockTracks[0])
+  })
+
+  it('triggers onDeleteTrack after confirming via useConfirmStore', async () => {
+    const handleDeleteTrack = vi.fn()
+    render(<TrackTable tracks={mockTracks} onDeleteTrack={handleDeleteTrack} />)
+
+    const deleteBtns = screen.getAllByRole('button', { name: /delete track/i })
+    fireEvent.click(deleteBtns[0])
+
+    expect(useConfirmStore.getState().isOpen).toBe(true)
+    expect(useConfirmStore.getState().title).toBe('Delete Track')
+
+    useConfirmStore.getState().handleConfirm()
+    await waitFor(() => {
+      expect(handleDeleteTrack).toHaveBeenCalledWith(mockTracks[0])
+    })
   })
 })

@@ -44,6 +44,9 @@ openspec/
 go.work*
 .worktrees/
 .playwright-mcp/
+node_modules/
+.superpowers/
+.claude/
 
 # Temp benchmark files
 zz_*_test.go

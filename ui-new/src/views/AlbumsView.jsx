@@ -6,7 +6,7 @@ import { usePlayerStore } from '../store/usePlayerStore'
 
 export default function AlbumsView() {
   const [albums, setAlbums] = useState([])
-  const [sortType, setSortType] = useState('recent')
+  const [sortType, setSortType] = useState('newest')
   const [searchFilter, setSearchFilter] = useState('')
   const [loading, setLoading] = useState(true)
 
@@ -50,11 +50,12 @@ export default function AlbumsView() {
   })
 
   const sortTabs = [
-    { id: 'recent', label: 'Recent' },
-    { id: 'frequent', label: 'Frequent' },
-    { id: 'starred', label: 'Starred' },
+    { id: 'newest', label: 'Recently Added' },
+    { id: 'recent', label: 'Recently Played' },
+    { id: 'frequent', label: 'Most Played' },
     { id: 'alphabeticalByName', label: 'By Title' },
     { id: 'alphabeticalByArtist', label: 'By Artist' },
+    { id: 'starred', label: 'Starred' },
     { id: 'random', label: 'Random' },
   ]
 
@@ -87,16 +88,16 @@ export default function AlbumsView() {
       </div>
 
       {/* Sort Pills */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1">
+      <div className="flex items-center gap-2 overflow-x-auto py-1.5 px-0.5">
         {sortTabs.map((tab) => (
           <button
             key={tab.id}
             type="button"
             onClick={() => setSortType(tab.id)}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer leading-none border focus:outline-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/40 ${
               sortType === tab.id
-                ? 'bg-primary text-white font-semibold shadow-md'
-                : 'bg-surface-container-low border border-outline-variant text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
+                ? 'bg-primary text-white font-semibold shadow-md border-primary'
+                : 'bg-surface-container-low border-outline-variant text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
             }`}
           >
             {tab.label}

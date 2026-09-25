@@ -259,13 +259,18 @@ func (c *Client) SearchArtworkURL(ctx context.Context, artist, title string) (st
 	return artURL, nil
 }
 
-// DownloadCoverArt downloads the cover image from coverURL and writes it as cover.jpg inside targetDir.
-func (c *Client) DownloadCoverArt(ctx context.Context, coverURL, targetDir string) error {
+// DownloadCoverArtNamed downloads the cover image from coverURL and writes it as filename inside targetDir.
+func (c *Client) DownloadCoverArtNamed(ctx context.Context, coverURL, targetDir, filename string) error {
 	if strings.TrimSpace(coverURL) == "" || strings.TrimSpace(targetDir) == "" {
 		return errors.New("coverURL and targetDir must not be empty")
 	}
 
-	targetFile := filepath.Join(targetDir, "cover.jpg")
+	cleanFilename := strings.TrimSpace(filename)
+	if cleanFilename == "" {
+		cleanFilename = "cover.jpg"
+	}
+
+	targetFile := filepath.Join(targetDir, cleanFilename)
 	if _, err := os.Stat(targetFile); err == nil {
 		return nil
 	}
@@ -295,7 +300,7 @@ func (c *Client) DownloadCoverArt(ctx context.Context, coverURL, targetDir strin
 		return fmt.Errorf("failed to download cover art, status: %d", resp.StatusCode)
 	}
 
-	tmpFile := filepath.Join(targetDir, "cover.jpg.tmp")
+	tmpFile := filepath.Join(targetDir, cleanFilename+".tmp")
 	out, err := os.Create(tmpFile)
 	if err != nil {
 		return err
@@ -312,17 +317,27 @@ func (c *Client) DownloadCoverArt(ctx context.Context, coverURL, targetDir strin
 	return os.Rename(tmpFile, targetFile)
 }
 
-// DownloadCoverArtWithFallback attempts to download cover art from primaryURL.
+// DownloadCoverArt downloads the cover image from coverURL and writes it as cover.jpg inside targetDir.
+func (c *Client) DownloadCoverArt(ctx context.Context, coverURL, targetDir string) error {
+	return c.DownloadCoverArtNamed(ctx, coverURL, targetDir, "cover.jpg")
+}
+
+// DownloadCoverArtWithFallbackNamed attempts to download cover art from primaryURL using a custom filename.
 // If primaryURL is empty or fails, it falls back to querying iTunes search with artist and title.
-func (c *Client) DownloadCoverArtWithFallback(ctx context.Context, primaryURL, artist, title, targetDir string) error {
-	targetFile := filepath.Join(targetDir, "cover.jpg")
+func (c *Client) DownloadCoverArtWithFallbackNamed(ctx context.Context, primaryURL, artist, title, targetDir, filename string) error {
+	cleanFilename := strings.TrimSpace(filename)
+	if cleanFilename == "" {
+		cleanFilename = "cover.jpg"
+	}
+
+	targetFile := filepath.Join(targetDir, cleanFilename)
 	if _, err := os.Stat(targetFile); err == nil {
 		return nil
 	}
 
 	var primaryErr error
 	if strings.TrimSpace(primaryURL) != "" {
-		if err := c.DownloadCoverArt(ctx, primaryURL, targetDir); err == nil {
+		if err := c.DownloadCoverArtNamed(ctx, primaryURL, targetDir, cleanFilename); err == nil {
 			return nil
 		} else {
 			primaryErr = err
@@ -334,7 +349,7 @@ func (c *Client) DownloadCoverArtWithFallback(ctx context.Context, primaryURL, a
 	if cleanArtist != "" || cleanTitle != "" {
 		itunesCover, err := c.SearchArtworkURL(ctx, cleanArtist, cleanTitle)
 		if err == nil && itunesCover != "" {
-			if err := c.DownloadCoverArt(ctx, itunesCover, targetDir); err == nil {
+			if err := c.DownloadCoverArtNamed(ctx, itunesCover, targetDir, cleanFilename); err == nil {
 				return nil
 			}
 		}
@@ -344,4 +359,10 @@ func (c *Client) DownloadCoverArtWithFallback(ctx context.Context, primaryURL, a
 		return fmt.Errorf("primary cover download failed: %w", primaryErr)
 	}
 	return errors.New("no cover art available")
+}
+
+// DownloadCoverArtWithFallback attempts to download cover art from primaryURL into targetDir.
+// If primaryURL is empty or fails, it falls back to querying iTunes search with artist and title.
+func (c *Client) DownloadCoverArtWithFallback(ctx context.Context, primaryURL, artist, title, targetDir string) error {
+	return c.DownloadCoverArtWithFallbackNamed(ctx, primaryURL, artist, title, targetDir, "cover.jpg")
 }

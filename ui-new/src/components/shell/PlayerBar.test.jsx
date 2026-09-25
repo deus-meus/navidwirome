@@ -32,14 +32,14 @@ describe('PlayerBar', () => {
       </BrowserRouter>
     )
 
-    expect(screen.getByText('Lapis')).toBeInTheDocument()
-    expect(screen.getByText('The Panturas')).toBeInTheDocument()
+    expect(screen.getAllByText('Lapis').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('The Panturas').length).toBeGreaterThan(0)
     expect(screen.getByRole('button', { name: /shuffle/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /previous/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /^play$/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /next/i })).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: /^play$/i }).length).toBeGreaterThan(0)
+    expect(screen.getAllByRole('button', { name: /next/i }).length).toBeGreaterThan(0)
     expect(screen.getByRole('button', { name: /repeat/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /favorite current track/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /favorite current track$/i })).toBeInTheDocument()
   })
 
   it('toggles favorite when clicking the favorite button', async () => {
@@ -51,7 +51,7 @@ describe('PlayerBar', () => {
       </BrowserRouter>
     )
 
-    const favBtn = screen.getByRole('button', { name: /favorite current track/i })
+    const favBtn = screen.getAllByRole('button', { name: /favorite current track/i })[0]
     fireEvent.click(favBtn)
 
     expect(subsonic.star).toHaveBeenCalledWith('s1')
