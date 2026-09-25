@@ -1,7 +1,7 @@
 class AudioManager {
   constructor() {
     this.audio = new Audio()
-    this.audio.preload = 'auto'
+    this.audio.preload = 'metadata'
     this.listeners = new Map()
 
     const savedVol = typeof localStorage !== 'undefined' ? localStorage.getItem('navidwirome_volume') : null
