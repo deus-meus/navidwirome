@@ -121,6 +121,57 @@ func getCredentialsFromBody(r *http.Request) (username string, password string, 
 	return username, password, nil
 }
 
+func checkInitialSetup(ds model.DataStore) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		c, err := ds.User(r.Context()).CountAll()
+		firstTime := c == 0 && err == nil
+		_ = rest.RespondWithJSON(w, http.StatusOK, map[string]bool{"firstTime": firstTime})
+	}
+}
+
+func registerUserHandler(ds model.DataStore) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		username, password, err := getCredentialsFromBody(r)
+		if err != nil {
+			log.Error(r, "parsing request body", err)
+			_ = rest.RespondWithError(w, http.StatusUnprocessableEntity, err.Error())
+			return
+		}
+		c, err := ds.User(r.Context()).CountAll()
+		if err != nil || c == 0 {
+			_ = rest.RespondWithError(w, http.StatusBadRequest, "Please create the initial admin account first")
+			return
+		}
+		userRepo := ds.User(r.Context())
+		existing, _ := userRepo.FindByUsername(username)
+		if existing != nil {
+			_ = rest.RespondWithError(w, http.StatusBadRequest, "Username already exists")
+			return
+		}
+
+		caser := cases.Title(language.Und)
+		now := time.Now()
+		newUser := model.User{
+			ID:          id.NewRandom(),
+			UserName:    username,
+			Name:        caser.String(username),
+			Email:       "",
+			NewPassword: password,
+			IsAdmin:     false,
+			CanUpload:   true,
+			CanEditTags: true,
+			LastLoginAt: &now,
+		}
+		err = userRepo.Put(&newUser)
+		if err != nil {
+			log.Error(r.Context(), "Could not create user", "user", newUser, err)
+			_ = rest.RespondWithError(w, http.StatusInternalServerError, "Could not create user")
+			return
+		}
+		doLogin(ds, username, password, w, r)
+	}
+}
+
 func createAdmin(ds model.DataStore) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		username, password, err := getCredentialsFromBody(r)

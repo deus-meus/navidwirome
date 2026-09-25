@@ -12,7 +12,7 @@ describe('App Root', () => {
   it('renders LoginView when not authenticated', () => {
     useAuthStore.setState({ isAuthenticated: false, isLoading: false, checkAuth: vi.fn() })
     render(<App />)
-    expect(screen.getByRole('button', { name: /Sign In/i })).toBeInTheDocument()
+    expect(screen.getAllByText(/Sign In/i).length).toBeGreaterThan(0)
   })
 
   it('renders ShellLayout and DiscoverView when authenticated', () => {

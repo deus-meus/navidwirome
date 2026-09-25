@@ -216,7 +216,9 @@ func (s *Server) mountAuthenticationRoutes() chi.Router {
 
 			r.Post("/login", login(s.ds))
 		}
+		r.Get("/initialSetup", checkInitialSetup(s.ds))
 		r.Post("/createAdmin", createAdmin(s.ds))
+		r.Post("/register", registerUserHandler(s.ds))
 	})
 }
 

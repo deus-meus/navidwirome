@@ -2,14 +2,33 @@ import { create } from 'zustand'
 import subsonic from '../api/subsonic'
 import { nativeUserApi } from '../api/nativeUserApi'
 
-export const useAuthStore = create((set) => ({
+export const useAuthStore = create((set, get) => ({
   user: null,
   isAuthenticated: false,
   isLoading: true,
+  isFirstTime: false,
   error: null,
+
+  checkInitialSetup: async () => {
+    try {
+      if (window.__NAVIDROME_CONFIG__?.firstTime !== undefined) {
+        const isFirst = Boolean(window.__NAVIDROME_CONFIG__.firstTime)
+        set({ isFirstTime: isFirst })
+        return isFirst
+      }
+      const res = await nativeUserApi.checkInitialSetup()
+      const isFirst = Boolean(res?.firstTime)
+      set({ isFirstTime: isFirst })
+      return isFirst
+    } catch {
+      set({ isFirstTime: false })
+      return false
+    }
+  },
 
   checkAuth: async () => {
     set({ isLoading: true, error: null })
+    await get().checkInitialSetup()
     if (!subsonic.hasCredentials()) {
       set({ isAuthenticated: false, user: null, isLoading: false })
       return false
@@ -50,6 +69,77 @@ export const useAuthStore = create((set) => ({
       localStorage.removeItem('token')
       localStorage.removeItem('navidwirome_user')
       set({ isAuthenticated: false, user: null, isLoading: false })
+      return false
+    }
+  },
+
+  createAdmin: async (username, password) => {
+    set({ isLoading: true, error: null })
+    try {
+      const data = await nativeUserApi.createAdmin(username, password)
+      await subsonic.login(username, password)
+      if (data.token) {
+        localStorage.setItem('token', data.token)
+      }
+      const authInfo = {
+        id: data.id,
+        username: data.username || username,
+        name: data.name || username,
+        isAdmin: true,
+        canUpload: true,
+        canEditTags: true,
+      }
+      localStorage.setItem('navidwirome_user', JSON.stringify(authInfo))
+      set({
+        isAuthenticated: true,
+        user: authInfo,
+        isFirstTime: false,
+        isLoading: false,
+        error: null,
+      })
+      return true
+    } catch (err) {
+      set({
+        isAuthenticated: false,
+        user: null,
+        isLoading: false,
+        error: err.message || 'Failed to create admin user',
+      })
+      return false
+    }
+  },
+
+  register: async (username, password) => {
+    set({ isLoading: true, error: null })
+    try {
+      const data = await nativeUserApi.register(username, password)
+      await subsonic.login(username, password)
+      if (data.token) {
+        localStorage.setItem('token', data.token)
+      }
+      const authInfo = {
+        id: data.id,
+        username: data.username || username,
+        name: data.name || username,
+        isAdmin: Boolean(data.isAdmin),
+        canUpload: Boolean(data.canUpload),
+        canEditTags: Boolean(data.canEditTags),
+      }
+      localStorage.setItem('navidwirome_user', JSON.stringify(authInfo))
+      set({
+        isAuthenticated: true,
+        user: authInfo,
+        isLoading: false,
+        error: null,
+      })
+      return true
+    } catch (err) {
+      set({
+        isAuthenticated: false,
+        user: null,
+        isLoading: false,
+        error: err.message || 'Registration failed',
+      })
       return false
     }
   },

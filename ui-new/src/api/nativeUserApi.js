@@ -10,6 +10,52 @@ export function getAuthHeaders() {
 }
 
 export const nativeUserApi = {
+  async checkInitialSetup() {
+    try {
+      const res = await fetch('/auth/initialSetup')
+      if (!res.ok) return { firstTime: false }
+      return await res.json()
+    } catch {
+      return { firstTime: false }
+    }
+  },
+
+  async createAdmin(username, password) {
+    const res = await fetch('/auth/createAdmin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    })
+    if (!res.ok) {
+      const text = await res.text()
+      let msg = text
+      try {
+        const json = JSON.parse(text)
+        msg = json.error || json.message || text
+      } catch {}
+      throw new Error(msg || 'Failed to create initial admin')
+    }
+    return res.json()
+  },
+
+  async register(username, password) {
+    const res = await fetch('/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    })
+    if (!res.ok) {
+      const text = await res.text()
+      let msg = text
+      try {
+        const json = JSON.parse(text)
+        msg = json.error || json.message || text
+      } catch {}
+      throw new Error(msg || 'Registration failed')
+    }
+    return res.json()
+  },
+
   async getCurrentUser() {
     const res = await fetch('/api/me', {
       headers: getAuthHeaders(),
