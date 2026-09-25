@@ -1,0 +1,18 @@
+version: "3.8"
+
+services:
+  navidwirome:
+    image: ghcr.io/deus-meus/navidwirome:latest
+    container_name: navidwirome
+    restart: unless-stopped
+    ports:
+      - "4533:4533"
+    volumes:
+      - ./data:/data
+      - ./music:/music
+    environment:
+      - ND_MUSICFOLDER=/music
+      - ND_DATAFOLDER=/data
+      - ND_PORT=4533
+      - ND_SCANSCHEDULE=1h
+      - ND_LOGLEVEL=info

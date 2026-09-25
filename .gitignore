@@ -26,6 +26,7 @@ music.old
 *.db*
 .gitinfo
 docker-compose.yml
+!docker-compose.yml
 !contrib/docker-compose.yml
 binaries
 navidrome-*

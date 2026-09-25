@@ -25,21 +25,20 @@ FROM scratch AS xx
 COPY --from=xx-build /out/ /usr/bin/
 
 ########################################################################################################################
-### Build Navidrome UI
+### Build Navidwirome UI (ui-new)
 FROM --platform=$BUILDPLATFORM node:lts-alpine AS ui
 WORKDIR /app
 
 # Install node dependencies
-COPY ui/package.json ui/package-lock.json ./
-COPY ui/bin/ ./bin/
+COPY ui-new/package.json ui-new/package-lock.json ./
 RUN npm ci
 
 # Build bundle
-COPY ui/ ./
-RUN npm run build -- --outDir=/build
+COPY ui-new/ ./
+RUN npm run build
 
 FROM scratch AS ui-bundle
-COPY --from=ui /build /build
+COPY --from=ui /app/dist /build
 
 ########################################################################################################################
 ### Build Navidrome binary for Docker image (dynamic musl, enables native libwebp via dlopen)
