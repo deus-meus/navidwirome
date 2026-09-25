@@ -51,6 +51,9 @@ class AudioManager {
   async play(src) {
     if (src && this.audio.src !== src) {
       this.audio.src = src
+      if (typeof this.audio.load === 'function') {
+        this.audio.load()
+      }
     }
     try {
       await this.audio.play()
