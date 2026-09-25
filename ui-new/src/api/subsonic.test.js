@@ -18,12 +18,17 @@ describe('subsonic API client', () => {
     expect(url).toContain('f=json')
   })
 
-  it('builds direct raw stream URL for instant playback', () => {
+  it('builds opus 192kbps stream URL by default for low-bandwidth optimization', () => {
     subsonic.setCredentials('alice', 'testtoken123', 'randomsalt456')
     const streamUrl = subsonic.getStreamUrl('song123')
     expect(streamUrl).toContain('/rest/stream?')
     expect(streamUrl).toContain('id=song123')
-    expect(streamUrl).toContain('format=raw')
+    expect(streamUrl).toContain('format=opus')
+    expect(streamUrl).toContain('maxBitRate=192')
+
+    const rawStreamUrl = subsonic.getStreamUrl('song123', 'raw')
+    expect(rawStreamUrl).toContain('format=raw')
+    expect(rawStreamUrl).not.toContain('maxBitRate')
   })
 
   it('generates defensive cover art URLs with proper prefixing', () => {

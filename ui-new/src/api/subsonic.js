@@ -92,8 +92,15 @@ class SubsonicClient {
     }
   }
 
-  getStreamUrl(songId) {
-    return this.buildUrl('stream', { id: songId, format: 'raw' })
+  getStreamUrl(songId, format = 'opus', maxBitRate = 192) {
+    const params = { id: songId }
+    if (format && format !== 'raw') {
+      params.format = format
+      if (maxBitRate) params.maxBitRate = maxBitRate
+    } else {
+      params.format = 'raw'
+    }
+    return this.buildUrl('stream', params)
   }
 
   getCoverArtUrl(record, size = 300, square = true) {
