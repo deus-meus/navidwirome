@@ -49,10 +49,13 @@ class AudioManager {
   }
 
   async play(src) {
-    if (src && this.audio.src !== src) {
-      this.audio.src = src
-      if (typeof this.audio.load === 'function') {
-        this.audio.load()
+    if (src) {
+      const fullSrc = typeof window !== 'undefined' ? new URL(src, window.location.href).href : src
+      if (this.audio.src !== fullSrc) {
+        this.audio.src = fullSrc
+        if (typeof this.audio.load === 'function') {
+          this.audio.load()
+        }
       }
     }
     try {
