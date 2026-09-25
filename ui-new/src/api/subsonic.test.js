@@ -18,6 +18,14 @@ describe('subsonic API client', () => {
     expect(url).toContain('f=json')
   })
 
+  it('builds direct raw stream URL for instant playback', () => {
+    subsonic.setCredentials('alice', 'testtoken123', 'randomsalt456')
+    const streamUrl = subsonic.getStreamUrl('song123')
+    expect(streamUrl).toContain('/rest/stream?')
+    expect(streamUrl).toContain('id=song123')
+    expect(streamUrl).toContain('format=raw')
+  })
+
   it('generates defensive cover art URLs with proper prefixing', () => {
     subsonic.setCredentials('alice', 'testtoken123', 'randomsalt456')
 

@@ -93,7 +93,7 @@ class SubsonicClient {
   }
 
   getStreamUrl(songId) {
-    return this.buildUrl('stream', { id: songId })
+    return this.buildUrl('stream', { id: songId, format: 'raw' })
   }
 
   getCoverArtUrl(record, size = 300, square = true) {
