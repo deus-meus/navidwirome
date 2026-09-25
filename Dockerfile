@@ -35,7 +35,7 @@ RUN npm ci
 
 # Build bundle
 COPY ui-new/ ./
-RUN npm run build
+RUN npm run build && cp -r dist /build
 
 FROM scratch AS ui-bundle
 COPY --from=ui /app/dist /build
