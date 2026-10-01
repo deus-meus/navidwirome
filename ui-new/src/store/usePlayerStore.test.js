@@ -77,4 +77,17 @@ describe('usePlayerStore', () => {
     // Current playing is '1' (was index 2, should still be index 2)
     expect(usePlayerStore.getState().queueIndex).toBe(2)
   })
+
+  it('toggles mute and restores previous volume', () => {
+    vi.spyOn(audioManager, 'setVolume').mockImplementation((vol) => {
+      usePlayerStore.setState({ volume: vol })
+    })
+
+    usePlayerStore.setState({ volume: 0.8 })
+    usePlayerStore.getState().toggleMute()
+    expect(usePlayerStore.getState().volume).toBe(0)
+
+    usePlayerStore.getState().toggleMute()
+    expect(usePlayerStore.getState().volume).toBe(0.8)
+  })
 })

@@ -23,19 +23,31 @@ export default function App() {
 
   useEffect(() => {
     const handleGlobalKeyDown = (e) => {
-      // Spacebar toggles playback unless typing in input/textarea/contentEditable
-      if (e.code === 'Space' || e.key === ' ') {
-        const target = e.target
-        const isInput =
-          target &&
-          (target.tagName === 'INPUT' ||
-            target.tagName === 'TEXTAREA' ||
-            target.isContentEditable ||
-            target.getAttribute?.('role') === 'textbox')
-        if (!isInput) {
-          e.preventDefault()
-          usePlayerStore.getState().togglePlay()
-        }
+      const target = e.target
+      const isInput =
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.isContentEditable ||
+          target.getAttribute?.('role') === 'textbox')
+      if (isInput) return
+
+      if (e.code === 'ArrowUp') {
+        e.preventDefault()
+        const current = usePlayerStore.getState().volume
+        const next = Math.min(1, Number((current + 0.05).toFixed(2)))
+        usePlayerStore.getState().setVolume(next)
+      } else if (e.code === 'ArrowDown') {
+        e.preventDefault()
+        const current = usePlayerStore.getState().volume
+        const next = Math.max(0, Number((current - 0.05).toFixed(2)))
+        usePlayerStore.getState().setVolume(next)
+      } else if (e.code === 'KeyM') {
+        e.preventDefault()
+        usePlayerStore.getState().toggleMute()
+      } else if (e.code === 'Space' || e.key === ' ') {
+        e.preventDefault()
+        usePlayerStore.getState().togglePlay()
       }
     }
     window.addEventListener('keydown', handleGlobalKeyDown)

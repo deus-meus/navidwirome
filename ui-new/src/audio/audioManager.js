@@ -19,6 +19,9 @@ class AudioManager {
     this.audio.addEventListener('timeupdate', () => {
       this.emit('timeupdate', this.audio.currentTime)
     })
+    this.audio.addEventListener('volumechange', () => {
+      this.emit('volumechange', this.audio.volume)
+    })
     this.audio.addEventListener('durationchange', () => {
       this.emit('durationchange', this.audio.duration || 0)
     })

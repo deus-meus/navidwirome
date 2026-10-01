@@ -27,7 +27,7 @@ describe('App Root', () => {
     expect(screen.getByText(/Quick Access/i)).toBeInTheDocument()
   })
 
-  it('triggers togglePlay on spacebar press outside input fields', () => {
+  it('triggers togglePlay, setVolume, and toggleMute on global hotkeys', () => {
     useAuthStore.setState({
       isAuthenticated: true,
       isLoading: false,
@@ -36,8 +36,12 @@ describe('App Root', () => {
     })
 
     const togglePlaySpy = vi.fn()
+    const setVolumeSpy = vi.fn()
+    const toggleMuteSpy = vi.fn()
     vi.spyOn(usePlayerStore, 'getState').mockReturnValue({
       togglePlay: togglePlaySpy,
+      setVolume: setVolumeSpy,
+      toggleMute: toggleMuteSpy,
       playTrack: vi.fn(),
       volume: 0.8,
       isPlaying: false,
@@ -45,9 +49,20 @@ describe('App Root', () => {
 
     render(<App />)
 
-    const event = new KeyboardEvent('keydown', { code: 'Space', bubbles: true })
-    window.dispatchEvent(event)
-
+    // Spacebar
+    window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Space', bubbles: true }))
     expect(togglePlaySpy).toHaveBeenCalled()
+
+    // ArrowUp
+    window.dispatchEvent(new KeyboardEvent('keydown', { code: 'ArrowUp', bubbles: true }))
+    expect(setVolumeSpy).toHaveBeenCalledWith(0.85)
+
+    // ArrowDown
+    window.dispatchEvent(new KeyboardEvent('keydown', { code: 'ArrowDown', bubbles: true }))
+    expect(setVolumeSpy).toHaveBeenCalledWith(0.75)
+
+    // KeyM
+    window.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyM', bubbles: true }))
+    expect(toggleMuteSpy).toHaveBeenCalled()
   })
 })

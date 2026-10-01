@@ -60,6 +60,17 @@ export const usePlayerStore = create((set, get) => {
       audioManager.setVolume(vol)
     },
 
+    toggleMute: () => {
+      const { volume } = get()
+      if (volume > 0) {
+        set({ _lastVolume: volume })
+        audioManager.setVolume(0)
+      } else {
+        const restored = get()._lastVolume ?? 0.8
+        audioManager.setVolume(restored)
+      }
+    },
+
     playNext: async () => {
       const { queue, queueIndex, repeatMode, isShuffle } = get()
       if (queue.length === 0) return
